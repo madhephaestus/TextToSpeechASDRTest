@@ -96,6 +96,8 @@ ISpeakingProgress sp ={double percent,AudioStatus status->
 		return
 	boolean isMouthOpen = (status==AudioStatus.attack)
 	mouth.setTargetEngineeringUnits(isMouthOpen?-20.0:0);
+	mouth.flush(0);
+	
 }
 BowlerKernel.speak("A test phrase... a pause...a quick, brown fox jumpes over the lazy dog.", 100, 0, 201, 1.0, 1.0,sp)
 
