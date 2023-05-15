@@ -24,19 +24,26 @@ MobileBase base=DeviceManager.getSpecificDevice( "Standard6dof",{
 	if(m==null)
 		throw new RuntimeException("Arm failed to assemble itself")
 	println "Connecting new device robot arm "+m
-	regen=true;
 	return m
 })
-if(regen) {
-	MobileBaseCadManager get = MobileBaseCadManager.get( base)
-	get.setConfigurationViewerMode(false)
-	get.generateCad()
-	Thread.sleep(100);
+MobileBaseCadManager get = MobileBaseCadManager.get( base)
+ThreadUtil.wait(200)
+boolean wasCOnfig = get.configMode
+if(wasCOnfig) {
 	while(get.getProcesIndictor().get()<1){
-		println "Waiting for cad to get to 1:"+get.getProcesIndictor().get()
+		println "Waiting for Config DISPLA to get to 1:"+get.getProcesIndictor().get()
 		ThreadUtil.wait(1000)
 	}
+	get.setConfigurationViewerMode(false)
+	get.generateCad()
+	ThreadUtil.wait(200)
+	
 }
+while(get.getProcesIndictor().get()<1){
+	println "Waiting for cad to get to 1:"+get.getProcesIndictor().get()
+	ThreadUtil.wait(1000)
+}
+
 DHParameterKinematics spine = base.getAllDHChains().get(0);
 MobileBase head = spine.getSlaveMobileBase(5)
 AbstractLink mouth =head.getAllDHChains().get(0).getAbstractLink(0)
