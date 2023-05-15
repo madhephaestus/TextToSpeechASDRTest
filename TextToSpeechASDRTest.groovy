@@ -65,7 +65,9 @@ ISpeakingProgress sp ={double percent,AudioStatus status->
 	println "Progress: "+percent+"% Status "+status+" "
 	if(a!=null) {
 		Platform.runLater( {
-			a.setContentText((status==AudioStatus.attack||status==AudioStatus.sustain)?"0":"-");
+			boolean isMouthOpen = (status==AudioStatus.attack||status==AudioStatus.sustain)
+			String local =isMouthOpen?"0":"-"
+			a.setContentText(local);
 		});
 	}
 }
