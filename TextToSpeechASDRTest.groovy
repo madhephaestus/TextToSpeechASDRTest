@@ -5,22 +5,44 @@ import com.neuronrobotics.bowlerstudio.AudioPlayer
 import com.neuronrobotics.bowlerstudio.AudioStatus
 import com.neuronrobotics.bowlerstudio.IAudioProcessingLambda
 import com.neuronrobotics.bowlerstudio.ISpeakingProgress
+import com.neuronrobotics.bowlerstudio.creature.MobileBaseCadManager
+import com.neuronrobotics.bowlerstudio.creature.MobileBaseLoader
+import com.neuronrobotics.sdk.addons.kinematics.AbstractLink
+import com.neuronrobotics.sdk.addons.kinematics.DHParameterKinematics
+import com.neuronrobotics.sdk.addons.kinematics.MobileBase
+import com.neuronrobotics.sdk.common.DeviceManager
 
-// code here
-Alert a=null;
-Platform.runLater( {
-	Alert alert = new Alert(AlertType.INFORMATION);
-	a = alert;
-	alert.setTitle("Mouth Motion Simulator");
-	alert.setHeaderText("");
-	alert.setContentText("Loading...");
-	alert.showAndWait();
-});
 
-while(a==null)
+boolean regen=false;
+MobileBase base=DeviceManager.getSpecificDevice( "Standard6dof",{
+	//If the device does not exist, prompt for the connection
+
+	MobileBase m = MobileBaseLoader.fromGit(
+			"https://github.com/Halloween2020TheChild/GroguMechanicsCad.git",
+			"hephaestus.xml"
+			)
+	if(m==null)
+		throw new RuntimeException("Arm failed to assemble itself")
+	println "Connecting new device robot arm "+m
+	regen=true;
+	return m
+})
+if(regen) {
+	MobileBaseCadManager get = MobileBaseCadManager.get( base)
+	get.setConfigurationViewerMode(false)
+	get.generateCad()
 	Thread.sleep(100);
-AudioPlayer.setThreshhold(600/65535.0)
-AudioPlayer.setLowerThreshhold(100/65535.0)
+	while(get.getProcesIndictor().get()<1){
+		println "Waiting for cad to get to 1:"+get.getProcesIndictor().get()
+		ThreadUtil.wait(1000)
+	}
+}
+DHParameterKinematics spine = base.getAllDHChains().get(0);
+MobileBase head = spine.getSlaveMobileBase(5)
+AbstractLink mouth =head.getAllDHChains().get(0).getAbstractLink(0)
+
+AudioPlayer.setThreshhold(0.01)
+AudioPlayer.setLowerThreshhold(0.001)
 AudioPlayer.setIntegralGain(1);
 AudioPlayer.setDerivitiveGain(1);
 AudioPlayer.setLambda( new IAudioProcessingLambda() {
@@ -28,6 +50,7 @@ AudioPlayer.setLambda( new IAudioProcessingLambda() {
 	@Override
 	public AudioStatus update(AudioStatus currentStatus, double amplitudeUnitVector, double currentRollingAverage,
 			double currentDerivitiveTerm) {
+			
 		switch(currentStatus) {
 		case AudioStatus.attack:
 			if(amplitudeUnitVector>AudioPlayer.getThreshhold()) {
@@ -60,16 +83,12 @@ AudioPlayer.setLambda( new IAudioProcessingLambda() {
 
 	}
 });
-
 ISpeakingProgress sp ={double percent,AudioStatus status->
-	println "Progress: "+percent+"% Status "+status+" "
-	if(a!=null) {
-		Platform.runLater( {
-			boolean isMouthOpen = (status==AudioStatus.attack||status==AudioStatus.sustain)
-			String local =isMouthOpen?"0":"-"
-			a.setContentText(local);
-		});
-	}
+	//println "Progress: "+percent+"% Status "+status+" "
+	if(status==AudioStatus.release||status==AudioStatus.sustain)
+		return
+	boolean isMouthOpen = (status==AudioStatus.attack)
+	mouth.setTargetEngineeringUnits(isMouthOpen?-20.0:0);
 }
 BowlerKernel.speak("A test phrase... a pause...a quick, brown fox jumpes over the lazy dog.", 100, 0, 201, 1.0, 1.0,sp)
 Platform.runLater( {a.close();})
