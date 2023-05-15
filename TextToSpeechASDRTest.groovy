@@ -21,7 +21,7 @@ while(a==null)
 
 ISpeakingProgress sp ={double percent,AudioStatus status->
 	println "Progress: "+percent+"% Status "+status+" "
-	if(gpt.a!=null) {
+	if(a!=null) {
 		Platform.runLater( {
 			a.setContentText((status==AudioStatus.attack)?"0":"-");
 		});
