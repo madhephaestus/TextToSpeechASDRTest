@@ -91,7 +91,7 @@ AudioPlayer.setLambda( new IAudioProcessingLambda() {
 	}
 });
 ISpeakingProgress sp ={double percent,AudioStatus status->
-	//println "Progress: "+percent+"% Status "+status+" "
+	println "Progress: "+percent+"% Status "+status+" "
 	if(status==AudioStatus.release||status==AudioStatus.sustain)
 		return
 	boolean isMouthOpen = (status==AudioStatus.attack)
@@ -102,4 +102,5 @@ ISpeakingProgress sp ={double percent,AudioStatus status->
 BowlerKernel.speak("A test phrase... a pause...a quick, brown fox jumpes over the lazy dog.", 100, 0, 201, 1.0, 1.0,sp)
 
 
+	mouth.setTargetEngineeringUnits(0);
 
