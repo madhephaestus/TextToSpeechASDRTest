@@ -50,7 +50,7 @@ DHParameterKinematics spine = base.getAllDHChains().get(0);
 MobileBase head = spine.getSlaveMobileBase(5)
 AbstractLink mouth =head.getAllDHChains().get(0).getAbstractLink(0)
 
-AudioPlayer.setThreshhold(0.01)
+AudioPlayer.setThreshhold(0.02)
 AudioPlayer.setLowerThreshhold(0.001)
 AudioPlayer.setIntegralGain(1);
 AudioPlayer.setDerivitiveGain(1);
