@@ -1,3 +1,5 @@
+import javax.sound.sampled.AudioInputStream
+
 import javafx.application.Platform
 import javafx.scene.control.Alert
 import javafx.scene.control.Alert.AlertType
@@ -26,6 +28,8 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis
 import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Series;
+import javax.speech.Engine ;
+
 
 boolean regen=false;
 MobileBase base=DeviceManager.getSpecificDevice( "Standard6dof",{
@@ -72,67 +76,59 @@ double globalCurrentCalculated=0;
 boolean update=false;
 
 AudioPlayer.setLambda( new IAudioProcessingLambda() {
-			// code reference from the face application https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/AdaVoice/adavoice_face/adavoice_face.ino
-			int xfadeDistance=16;
-			double [] samples = new int[xfadeDistance];
-			int xfadeIndex=0;
-			boolean stare=true;
-			double previousValue = 0
-			@Override
-			public AudioStatus update(AudioStatus currentStatus, double amplitudeUnitVector, double currentRollingAverage,
-					double currentDerivitiveTerm) {
-				if(stare) {
-					stare=false;
-					for(int i=0;i<xfadeDistance;i++) {
-						samples[i]=currentRollingAverage;
+		// code reference from the face application https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/AdaVoice/adavoice_face/adavoice_face.ino
+		int xfadeDistance=16;
+		double [] samples = new double[xfadeDistance];
+		int xfadeIndex=0;
+		boolean stare=true;
+		@Override
+		public AudioStatus update(AudioStatus currentStatus, double amplitudeUnitVector, double currentRollingAverage,
+				double currentDerivitiveTerm, double percent) {
+			if(stare) {
+				stare=false;
+				for(int i=0;i<xfadeDistance;i++) {
+					samples[i]=currentRollingAverage;
+				}
+			}
+			double index=samples[xfadeIndex];
+			samples[xfadeIndex]=currentRollingAverage;
+			xfadeIndex++;
+			if(xfadeIndex==xfadeDistance) {
+				xfadeIndex=0;
+			}
+			double val = (currentRollingAverage+index)/2*currentDerivitiveTerm;
+			switch(currentStatus) {
+				case B_KST_SOUNDS:
+					if(val>AudioPlayer.getThreshhold()) {
+						currentStatus=AudioStatus.D_AA_SOUNDS;
 					}
-					previousValue=amplitudeUnitVector;
-				}
-				double index=samples[xfadeIndex];
-				samples[xfadeIndex]=currentRollingAverage;
-				xfadeIndex++;
-				if(xfadeIndex==xfadeDistance) {
-					xfadeIndex=0;
-				}
-				globalCurrentDeriv=(amplitudeUnitVector-previousValue)*AudioPlayer.getDerivitiveGain();
-				previousValue=amplitudeUnitVector;
-				double val = (currentRollingAverage+index)/2*globalCurrentDeriv;
-				globalAmp=amplitudeUnitVector;
-				globalCurrentRoll=currentRollingAverage;
-
-				globalCurrentCalculated=val;
-				update=true;
-				switch(currentStatus) {
-					case AudioStatus.attack:
-						if(val>AudioPlayer.getThreshhold()) {
-							currentStatus=AudioStatus.sustain;
-						}
-						break;
-					case AudioStatus.decay:
-						if(val<AudioPlayer.getLowerThreshhold()) {
-							currentStatus=AudioStatus.release;
-						}
-						break;
-					case AudioStatus.release:
-						if(val>AudioPlayer.getThreshhold()) {
-							currentStatus=AudioStatus.attack;
-						}
-						break;
-					case AudioStatus.sustain:
-						if(val<AudioPlayer.getLowerThreshhold()) {
-							currentStatus=AudioStatus.decay;
-						}
-						break;
-					default:
-						break;
-				}
-				return currentStatus;
+					break;
+				case G_F_V_SOUNDS:
+					if(val<AudioPlayer.getLowerThreshhold()) {
+						currentStatus=AudioStatus.X_NO_SOUND;
+					}
+					break;
+				case X_NO_SOUND:
+					if(val>AudioPlayer.getThreshhold()) {
+						currentStatus=AudioStatus.B_KST_SOUNDS;
+					}
+					break;
+				case D_AA_SOUNDS:
+					if(val<AudioPlayer.getLowerThreshhold()) {
+						currentStatus=AudioStatus.G_F_V_SOUNDS;
+					}
+					break;
+				default:
+					break;
 			}
+			return currentStatus;
+		}
 
-			@Override
-			public void startProcessing() {
-			}
-		});
+		@Override
+		public void startProcessing(AudioInputStream ais) {
+			stare=true;
+		}
+	});
 public class GraphManager {
 	private ArrayList<XYChart.Series> pidGraphSeries=new ArrayList<>();
 	private LineChart<Double, Double> pidGraph;
@@ -213,10 +209,8 @@ public class GraphManager {
 }
 
 ISpeakingProgress sp ={double percent,AudioStatus status->
-	println "Progress: "+percent+"% Status "+status+" "
-	if(status==AudioStatus.release||status==AudioStatus.sustain)
-		return
-	boolean isMouthOpen = (status==AudioStatus.attack)
+
+	boolean isMouthOpen = status.isOpen()
 	mouth.setTargetEngineeringUnits(isMouthOpen?-20.0:0);
 	mouth.flush(0);
 
