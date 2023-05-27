@@ -98,22 +98,22 @@ AudioPlayer.setLambda( new IAudioProcessingLambda() {
 			}
 			double val = (currentRollingAverage+index)/2*currentDerivitiveTerm;
 			switch(currentStatus) {
-				case B_KST_SOUNDS:
+				case AudioStatus.B_KST_SOUNDS:
 					if(val>AudioPlayer.getThreshhold()) {
 						currentStatus=AudioStatus.D_AA_SOUNDS;
 					}
 					break;
-				case G_F_V_SOUNDS:
+				case AudioStatus.G_F_V_SOUNDS:
 					if(val<AudioPlayer.getLowerThreshhold()) {
 						currentStatus=AudioStatus.X_NO_SOUND;
 					}
 					break;
-				case X_NO_SOUND:
+				case AudioStatus.X_NO_SOUND:
 					if(val>AudioPlayer.getThreshhold()) {
 						currentStatus=AudioStatus.B_KST_SOUNDS;
 					}
 					break;
-				case D_AA_SOUNDS:
+				case AudioStatus.D_AA_SOUNDS:
 					if(val<AudioPlayer.getLowerThreshhold()) {
 						currentStatus=AudioStatus.G_F_V_SOUNDS;
 					}
@@ -211,7 +211,7 @@ public class GraphManager {
 ISpeakingProgress sp ={double percent,AudioStatus status->
 
 	boolean isMouthOpen = status.isOpen()
-	mouth.setTargetEngineeringUnits(isMouthOpen?-20.0:0);
+	mouth.setTargetEngineeringUnits(isMouthOpen?-10.0:0);
 	mouth.flush(0);
 
 }
