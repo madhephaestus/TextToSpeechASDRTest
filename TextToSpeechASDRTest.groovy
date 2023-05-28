@@ -125,8 +125,9 @@ AudioPlayer.setLambda( new IAudioProcessingLambda() {
 		}
 
 		@Override
-		public void startProcessing(AudioInputStream ais) {
+		public AudioInputStream startProcessing(AudioInputStream ais) {
 			stare=true;
+			return ais;
 		}
 	});
 public class GraphManager {
