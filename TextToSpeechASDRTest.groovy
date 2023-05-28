@@ -22,6 +22,7 @@ import com.neuronrobotics.sdk.addons.kinematics.DHParameterKinematics
 import com.neuronrobotics.sdk.addons.kinematics.MobileBase
 import com.neuronrobotics.sdk.common.DeviceManager
 import com.neuronrobotics.sdk.util.ThreadUtil
+import com.neuronrobotics.bowlerstudio.lipsync.RhubarbManager;
 
 
 import javafx.scene.chart.LineChart;
@@ -75,61 +76,8 @@ double globalCurrentDeriv=0;
 double globalCurrentCalculated=0;
 boolean update=false;
 
-AudioPlayer.setLambda( new IAudioProcessingLambda() {
-		// code reference from the face application https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/AdaVoice/adavoice_face/adavoice_face.ino
-		int xfadeDistance=16;
-		double [] samples = new double[xfadeDistance];
-		int xfadeIndex=0;
-		boolean stare=true;
-		@Override
-		public AudioStatus update(AudioStatus currentStatus, double amplitudeUnitVector, double currentRollingAverage,
-				double currentDerivitiveTerm, double percent) {
-			if(stare) {
-				stare=false;
-				for(int i=0;i<xfadeDistance;i++) {
-					samples[i]=currentRollingAverage;
-				}
-			}
-			double index=samples[xfadeIndex];
-			samples[xfadeIndex]=currentRollingAverage;
-			xfadeIndex++;
-			if(xfadeIndex==xfadeDistance) {
-				xfadeIndex=0;
-			}
-			double val = (currentRollingAverage+index)/2*currentDerivitiveTerm;
-			switch(currentStatus) {
-				case AudioStatus.B_KST_SOUNDS:
-					if(val>AudioPlayer.getThreshhold()) {
-						currentStatus=AudioStatus.D_AA_SOUNDS;
-					}
-					break;
-				case AudioStatus.G_F_V_SOUNDS:
-					if(val<AudioPlayer.getLowerThreshhold()) {
-						currentStatus=AudioStatus.X_NO_SOUND;
-					}
-					break;
-				case AudioStatus.X_NO_SOUND:
-					if(val>AudioPlayer.getThreshhold()) {
-						currentStatus=AudioStatus.B_KST_SOUNDS;
-					}
-					break;
-				case AudioStatus.D_AA_SOUNDS:
-					if(val<AudioPlayer.getLowerThreshhold()) {
-						currentStatus=AudioStatus.G_F_V_SOUNDS;
-					}
-					break;
-				default:
-					break;
-			}
-			return currentStatus;
-		}
+AudioPlayer.setLambda(new RhubarbManager());
 
-		@Override
-		public AudioInputStream startProcessing(AudioInputStream ais) {
-			stare=true;
-			return ais;
-		}
-	});
 public class GraphManager {
 	private ArrayList<XYChart.Series> pidGraphSeries=new ArrayList<>();
 	private LineChart<Double, Double> pidGraph;
@@ -210,9 +158,9 @@ public class GraphManager {
 }
 
 ISpeakingProgress sp ={double percent,AudioStatus status->
-
-	boolean isMouthOpen = status.isOpen()
-	mouth.setTargetEngineeringUnits(isMouthOpen?-10.0:0);
+println percent+" " +status
+	double isMouthOpen = status.mouthOpenVector()
+	mouth.setTargetEngineeringUnits(isMouthOpen*-20.0);
 	mouth.flush(0);
 
 }
@@ -227,7 +175,7 @@ VBox content = new VBox();
 content.getChildren().add(new Label("Audio Processing Graph"));
 content.getChildren().add(pidGraph);
 t.setContent(content)
-BowlerStudioController.addObject(t, null);
+//BowlerStudioController.addObject(t, null);
 
 boolean run=true;
 new Thread({
@@ -246,7 +194,7 @@ new Thread({
 	}
 }).start()
 
-double i=805
+double i=864
 try {
 	BowlerKernel.speak("A test phrase... a pause...a quick, brown fox jumpes over the lazy dog.", 100, 0, i, 1.0, 1.0,sp)
 }catch(Throwable tr) {
