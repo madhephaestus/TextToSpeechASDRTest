@@ -213,7 +213,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				double wordLen = wordEnd-wordStart
 				List<String> phonemes =dict.find(w)
 				double phonemeLength = wordLen/phonemes.size()
-				
+
 				//println "Word "+w+" starts at "+wordStart+" ends at "+wordEnd+" each phoneme length "+phonemeLength
 				for(int i=0;i<phonemes.size();i++) {
 					String phoneme = phonemes.get(i);
@@ -261,9 +261,11 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 						double secLen = ((double)durationInMillis)/1000.0
 						AudioInputStream ais =AudioSystem.getAudioInputStream(format,getAudioInputStream);
 						//println "Time of clip "+secLen+" sec"
+						recognizer.reset()
 						recognizer.setWords(true)
 						recognizer.setPartialWords(true)
 						int totalBytes = 0
+						numBytesRead=0;
 						while ((numBytesRead != -1) && (!Thread.interrupted())) {
 							numBytesRead = ais.read(abData, 0, abData.length);
 							totalBytes+=numBytesRead
@@ -279,10 +281,12 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 						}
 						VoskResultl database = gson.fromJson(recognizer.getFinalResult(), resultType);
 						processWords(database.result,durationInMillis)
-						TimeCodedViseme tcLast = timeCodedVisemes.get(timeCodedVisemes.size()-1)
-						// termination sound of nothing
-						TimeCodedViseme tc = new TimeCodedViseme(AudioStatus.X_NO_SOUND, tcLast.end,secLen, secLen)
-						timeCodedVisemes.add(tc)
+						if(timeCodedVisemes.size()>0) {
+							TimeCodedViseme tcLast = timeCodedVisemes.get(timeCodedVisemes.size()-1)
+							// termination sound of nothing
+							TimeCodedViseme tc = new TimeCodedViseme(AudioStatus.X_NO_SOUND, tcLast.end,secLen, secLen)
+							timeCodedVisemes.add(tc)
+						}
 					}catch(Throwable t) {
 						BowlerStudio.printStackTrace(t)
 					}
@@ -294,6 +298,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				println "Visemes added, start audio.. "
 			}
 			public AudioInputStream startProcessing(AudioInputStream ais, String TTSString) {
+				//recognizer = new Recognizer(model, 120000)
 				File audio = new File(ScriptingEngine.getWorkspace().getAbsolutePath() + "/tmp-tts.wav");
 				try {
 					long start = System.currentTimeMillis()
