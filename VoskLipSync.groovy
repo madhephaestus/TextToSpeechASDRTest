@@ -107,7 +107,7 @@ class TimeCodedViseme{
 		timePercent=(end/total)*100.0
 	}
 	String toString() {
-		return status.toString()+" "+timePercent+"% s="+start+" e="+end
+		return status.toString()+" "+timePercent
 	}
 }
 
@@ -194,7 +194,6 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 			Recognizer recognizer = new Recognizer(model, 120000)
 			int numBytesRead=0;
 			int CHUNK_SIZE = 4096;
-			int bytesRead = 0;
 			byte[] abData = new byte[CHUNK_SIZE];
 			ArrayList<TimeCodedViseme> timeCodedVisemes = null;
 			int words=0;
@@ -206,15 +205,16 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				return AudioStatus.X_NO_SOUND
 			}
 			private void addWord(VoskResultWord word,long len) {
+				
 				double secLen = ((double)len)/1000.0
 				String w = word.word;
+				if(w==null)
+					return;
 				double wordStart = word.start
 				double wordEnd = word.end;
 				double wordLen = wordEnd-wordStart
 				List<String> phonemes =dict.find(w)
 				double phonemeLength = wordLen/phonemes.size()
-
-				//println "Word "+w+" starts at "+wordStart+" ends at "+wordEnd+" each phoneme length "+phonemeLength
 				for(int i=0;i<phonemes.size();i++) {
 					String phoneme = phonemes.get(i);
 					AudioStatus stat = toStatus(phoneme)
@@ -232,12 +232,12 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 					add(tc)
 				}
 
-				//println word.word+" "+phonemes
+				println "Word "+w+" starts at "+wordStart+" ends at "+wordEnd+" each phoneme length "+phonemeLength+" "+phonemes+" "+timeCodedVisemes
 
 			}
 
 			private void add(TimeCodedViseme v) {
-				//println v
+				println v
 				timeCodedVisemes.add(v)
 			}
 
@@ -252,7 +252,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 
 			}
 			public void processRaw(File f, String ttsLocation) {
-				timeCodedVisemes = new ArrayList<>();
+				
 				words=0;
 				Thread t=new Thread({
 					try {
@@ -264,11 +264,10 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 						recognizer.reset()
 						recognizer.setWords(true)
 						recognizer.setPartialWords(true)
-						int totalBytes = 0
 						numBytesRead=0;
 						while ((numBytesRead != -1) && (!Thread.interrupted())) {
 							numBytesRead = ais.read(abData, 0, abData.length);
-							totalBytes+=numBytesRead
+
 							if (recognizer.acceptWaveForm(abData, numBytesRead)) {
 								String result=recognizer.getResult()
 								VoskResultl database = gson.fromJson(result, resultType);
@@ -285,7 +284,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 							TimeCodedViseme tcLast = timeCodedVisemes.get(timeCodedVisemes.size()-1)
 							// termination sound of nothing
 							TimeCodedViseme tc = new TimeCodedViseme(AudioStatus.X_NO_SOUND, tcLast.end,secLen, secLen)
-							timeCodedVisemes.add(tc)
+							add(tc)
 						}
 					}catch(Throwable t) {
 						BowlerStudio.printStackTrace(t)
@@ -298,7 +297,8 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				println "Visemes added, start audio.. "
 			}
 			public AudioInputStream startProcessing(AudioInputStream ais, String TTSString) {
-				//recognizer = new Recognizer(model, 120000)
+				timeCodedVisemes = new ArrayList<>();
+				recognizer = new Recognizer(model, 120000)
 				File audio = new File(ScriptingEngine.getWorkspace().getAbsolutePath() + "/tmp-tts.wav");
 				try {
 					long start = System.currentTimeMillis()
@@ -326,16 +326,27 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				return ais;
 			}
 			public AudioStatus update(AudioStatus current, double amplitudeUnitVector, double currentRollingAverage, double currentDerivitiveTerm, double percent) {
+				//println timeCodedVisemes
+				AudioStatus ret=null
 				if (timeCodedVisemes.size() > 0) {
 					TimeCodedViseme map = timeCodedVisemes.get(0);
 					AudioStatus key = map.status
 					double value = map.timePercent
 					if (percent > value) {
 						timeCodedVisemes.remove(0);
-						return timeCodedVisemes.get(0).status
+//						if(timeCodedVisemes.size()>0)
+//							ret = timeCodedVisemes.get(0).status
+//						else
+//							ret= AudioStatus.X_NO_SOUND
 					}
-					return key;
+					if(ret==null)
+						ret=key;
 				}
-				return current;
+				if(ret==null)
+					ret=AudioStatus.X_NO_SOUND;
+				if(current!=ret) {
+					println timeCodedVisemes
+				}
+				return ret;
 			}
 		});
