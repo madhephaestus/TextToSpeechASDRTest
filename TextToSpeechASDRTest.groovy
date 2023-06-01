@@ -60,7 +60,7 @@ ISpeakingProgress sp ={double percent,AudioStatus status->
 
 double i=905
 try {
-	BowlerKernel.speak("A test phrase.", 100, 0, i, 1.0, 1.0,sp)
+	BowlerKernel.speak("A test phrase... a pause...a quick, brown fox jumpes over the lazy dog. Big bat, batman wow father", 100, 0, i, 1.0, 1.0,sp)
 	BowlerKernel.speak("This is a secong phrase", 100, 0, i, 1.0, 1.0,sp)
 	
 }catch(Throwable tr) {
