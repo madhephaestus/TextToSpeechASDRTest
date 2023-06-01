@@ -279,7 +279,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 			}
 
 			private void add(TimeCodedViseme v) {
-				println v
+				//println v
 				timeCodedVisemes.add(v)
 			}
 
@@ -302,7 +302,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 						long durationInMillis = 1000 * getAudioInputStream.getFrameLength() / getAudioInputStream.getFormat().getFrameRate();
 						double secLen = ((double)durationInMillis)/1000.0
 						AudioInputStream ais =AudioSystem.getAudioInputStream(format,getAudioInputStream);
-						println "Time of clip "+secLen+" sec"
+						//println "Time of clip "+secLen+" sec"
 						recognizer.setWords(true)
 						recognizer.setPartialWords(true)
 						int totalBytes = 0
@@ -455,7 +455,7 @@ new Thread({
 	}
 }).start()
 
-double i=100
+double i=905
 try {
 	BowlerKernel.speak("A test phrase... a pause...a quick, brown fox jumpes over the lazy dog. Big bat, batman wow father", 100, 0, i, 1.0, 1.0,sp)
 }catch(Throwable tr) {
