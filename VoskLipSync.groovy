@@ -332,7 +332,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 					double value = map.timePercent
 					if (percent > value) {
 						timeCodedVisemes.remove(0);
-						//return update(key, amplitudeUnitVector, currentRollingAverage, currentDerivitiveTerm, percent);
+						return timeCodedVisemes.get(0).status
 					}
 					return key;
 				}
