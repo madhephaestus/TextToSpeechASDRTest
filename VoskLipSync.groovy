@@ -197,11 +197,29 @@ public class PhoneticDictionary {
 			w=newW
 			extra =["n", "t"]
 		}
+		if(w.endsWith("'ar")) {
+			String newW =w.substring(0,w.length()-3)
+			println "Contraction reduced "+newW+" from "+w
+			w=newW
+			extra =[ "r"]
+		}
 		if(w.endsWith("'ll")) {
 			String newW =w.substring(0,w.length()-3)
 			println "Contraction reduced "+newW+" from "+w
 			w=newW
 			extra =["uw", "l"]
+		}
+		if(w.endsWith("'ve")) {
+			String newW =w.substring(0,w.length()-3)
+			println "Contraction reduced "+newW+" from "+w
+			w=newW
+			extra =["v"]
+		}
+		if(w.endsWith("'re")) {
+			String newW =w.substring(0,w.length()-3)
+			println "Contraction reduced "+newW+" from "+w
+			w=newW
+			extra =["r"]
 		}
 		if(w.endsWith("'s")) {
 			String newW =w.substring(0,w.length()-2)
