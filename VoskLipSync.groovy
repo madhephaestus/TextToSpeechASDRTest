@@ -302,7 +302,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 			}
 
 			private void add(TimeCodedViseme v) {
-				println "Adding "+ v
+				//println "Adding "+ v
 				timeCodedVisemes.add(v)
 			}
 
@@ -425,7 +425,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				if(ret==null)
 					ret=current;
 				if(current!=ret) {
-					println ret.toString()+" staarting at "+percent
+					//println ret.toString()+" staarting at "+percent
 				}	
 				return ret;
 			}
