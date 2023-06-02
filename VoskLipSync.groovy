@@ -180,8 +180,42 @@ public class PhoneticDictionary {
 		dictionary = parseDictionary(dictionaryText);
 	}
 
-	public ArrayList<String> find(String word) {
-		return dictionary.get(word);
+	public ArrayList<String> find(String w) {
+		ArrayList<String>  extra=null
+		if(w.endsWith("n't")) {
+			String newW =w.substring(0,w.length()-3)
+			println "Contraction reduced "+newW+" from "+w
+			w=newW
+			extra =["n", "t"]
+		}
+		if(w.endsWith("'ll")) {
+			String newW =w.substring(0,w.length()-3)
+			println "Contraction reduced "+newW+" from "+w
+			w=newW
+			extra =["uw", "l"]
+		}
+		if(w.endsWith("'s")) {
+			String newW =w.substring(0,w.length()-2)
+			println "Contraction reduced "+newW+" from "+w
+			w=newW
+			extra =["s"]
+		}
+		if(w.endsWith("'d")) {
+			String newW =w.substring(0,w.length()-2)
+			println "Contraction reduced "+newW+" from "+w
+			w=newW
+			extra =["d"]
+		}
+		ArrayList<String>  phonemes = []
+		ArrayList<String> dictionaryGet = dictionary.get(w)
+		if(dictionaryGet==null) {
+			return null
+		}
+		phonemes.addAll(dictionaryGet)
+		if(extra!=null) {
+			phonemes.addAll(extra)
+		}
+		return phonemes;
 	}
 }
 
@@ -210,31 +244,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				String w = word.word;
 				if(w==null)
 					return;
-				ArrayList<String>  extra=null
-				if(w.endsWith("n't")) {
-					String newW =w.substring(0,w.length()-3)
-					println "Contraction reduced "+newW+" from "+w
-					w=newW
-					extra =["n", "t"]
-				}
-				if(w.endsWith("'ll")) {
-					String newW =w.substring(0,w.length()-3)
-					println "Contraction reduced "+newW+" from "+w
-					w=newW
-					extra =["uw", "l"]
-				}
-				if(w.endsWith("'s")) {
-					String newW =w.substring(0,w.length()-2)
-					println "Contraction reduced "+newW+" from "+w
-					w=newW
-					extra =["s"]
-				}
-				if(w.endsWith("'d")) {
-					String newW =w.substring(0,w.length()-2)
-					println "Contraction reduced "+newW+" from "+w
-					w=newW
-					extra =["d"]
-				}
+
 				double wordStart = word.start
 				double wordEnd = word.end;
 				double wordLen = wordEnd-wordStart
@@ -243,9 +253,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 					println "\n\n unknown word "+w+"\n\n"
 					return;
 				}
-				if(extra!=null) {
-					phonemes.addAll(extra)
-				}
+
 				double phonemeLength = wordLen/phonemes.size()
 				for(int i=0;i<phonemes.size();i++) {
 					String phoneme = phonemes.get(i);
@@ -286,6 +294,8 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 			public void processRaw(File f, String ttsLocation) {
 				
 				words=0;
+				double positionInTrack =0;
+						
 				Thread t=new Thread({
 					try {
 						def getAudioInputStream = AudioSystem.getAudioInputStream(f)
@@ -296,9 +306,14 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 						recognizer.setWords(true)
 						recognizer.setPartialWords(true)
 						numBytesRead=0;
+						long total=0
 						while ((numBytesRead != -1) && (!Thread.interrupted())) {
 							numBytesRead = ais.read(abData, 0, abData.length);
-
+							total+=numBytesRead
+							double tmpTotal = total;
+							double len = (ais.getFrameLength() * 2);
+							positionInTrack = tmpTotal / len * 100.0;
+							
 							if (recognizer.acceptWaveForm(abData, numBytesRead)) {
 								String result=recognizer.getResult()
 								VoskResultl database = gson.fromJson(result, resultType);
@@ -323,7 +338,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 					}
 				})
 				t.start()
-				while(t.isAlive() && timeCodedVisemes.size()==0) {
+				while(t.isAlive() && positionInTrack<1) {
 					Thread.sleep(1)
 				}
 				println "Visemes added, start audio.. "
@@ -368,8 +383,10 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 						timeCodedVisemes.remove(0);
 						if(timeCodedVisemes.size()>0)
 							ret = timeCodedVisemes.get(0).status
-						else
+						else {
+							println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
 							ret= AudioStatus.X_NO_SOUND
+						}
 					}
 					if(ret==null)
 						ret=key;

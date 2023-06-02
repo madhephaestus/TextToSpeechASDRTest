@@ -46,10 +46,33 @@ MobileBase head = spine.getSlaveMobileBase(5)
 AbstractLink mouth =head.getAllDHChains().get(0).getAbstractLink(0)
 
 ScriptingEngine.gitScriptRun("https://github.com/madhephaestus/TextToSpeechASDRTest.git", "VoskLipSync.groovy")
-
+public double mouthOpenVector(AudioStatus s) {
+	switch(s) {
+	case AudioStatus.A_PBM_SOUNDS:
+		break;
+	case AudioStatus.B_KST_SOUNDS:
+		return 0.3;
+	case AudioStatus.C_EH_AE_SOUNDS:
+		return 0.6;
+	case AudioStatus.D_AA_SOUNDS:
+		return 1;
+	case AudioStatus.E_AO_ER_SOUNDS:
+		return 0.6;
+	case AudioStatus.F_UW_OW_W_SOUNDS:
+		return 0.2;
+	case AudioStatus.G_F_V_SOUNDS:
+		return 0.1;
+	case AudioStatus.H_L_SOUNDS:
+		return 1;
+	case AudioStatus.X_NO_SOUND:
+	default:
+		break;
+	}
+	return 0;
+}
 ISpeakingProgress sp ={double percent,AudioStatus status->
 	//println percent+" " +status
-	double isMouthOpen = status.mouthOpenVector()
+	double isMouthOpen = mouthOpenVector(status)
 	mouth.setTargetEngineeringUnits(isMouthOpen*-20.0);
 	mouth.flush(0);
 
@@ -60,7 +83,7 @@ ISpeakingProgress sp ={double percent,AudioStatus status->
 
 double i=905
 try {
-	BowlerKernel.speak("Don't worry you'll be listening wheren't you he'd hadn't wouldn't hes's going to", 100, 0, i, 1.0, 1.0,sp)
+	BowlerKernel.speak("Don't worry you'll be listening to the story of the Zoltar machine", 100, 0, i, 1.0, 1.0,sp)
 	BowlerKernel.speak("This is a secong phrase words to say with my mouth", 100, 0, i, 1.0, 1.0,sp)
 	
 }catch(Throwable tr) {
