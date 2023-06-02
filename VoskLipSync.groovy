@@ -44,7 +44,7 @@ Type partailType = new TypeToken<VoskPartial>() {}.getType();
 Type resultType = new TypeToken<VoskResultl>() {}.getType();
 
 Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
-Map<String, AudioStatus> ArpabetToBlair =new HashMap<>();
+ArpabetToBlair =new HashMap<>();
 ArpabetToBlair.put("-", AudioStatus.X_NO_SOUND);
 ArpabetToBlair.put("aa", AudioStatus.D_AA_SOUNDS);
 ArpabetToBlair.put("ae", AudioStatus.D_AA_SOUNDS);
@@ -209,7 +209,25 @@ public class PhoneticDictionary {
 		ArrayList<String>  phonemes = []
 		ArrayList<String> dictionaryGet = dictionary.get(w)
 		if(dictionaryGet==null) {
-			return null
+			dictionaryGet = []
+			byte[] bytes = w.getBytes()
+			println "Sounding out "+w
+			for(int i=0;i<w.length();i++) {
+				String charAt = new String(bytes[i]);
+				println charAt
+				if(ArpabetToBlair.get(charAt)!=null) {
+					dictionaryGet.add(charAt)
+				}else {
+					for(String s:ArpabetToBlair.keySet()) {
+						if(s.contains(charAt)) {
+							dictionaryGet.add(s)
+							break;
+						}
+					}
+				}
+			}
+			println "New Word: "+w+" "+dictionaryGet
+			dictionary.put(w,dictionaryGet)
 		}
 		phonemes.addAll(dictionaryGet)
 		if(extra!=null) {
@@ -390,6 +408,8 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 					}
 					if(ret==null)
 						ret=key;
+				}else {
+					println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
 				}
 				if(ret==null)
 					ret=AudioStatus.X_NO_SOUND;

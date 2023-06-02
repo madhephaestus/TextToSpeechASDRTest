@@ -83,7 +83,7 @@ ISpeakingProgress sp ={double percent,AudioStatus status->
 
 double i=905
 try {
-	BowlerKernel.speak("Don't worry you'll be listening to the story of the Zoltar machine", 100, 0, i, 1.0, 1.0,sp)
+	BowlerKernel.speak("Don't worry you'll be listening, for technocopia, to the story of the Zoltar machine", 100, 0, i, 1.0, 1.0,sp)
 	BowlerKernel.speak("This is a secong phrase words to say with my mouth", 100, 0, i, 1.0, 1.0,sp)
 	
 }catch(Throwable tr) {
