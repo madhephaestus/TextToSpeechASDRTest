@@ -214,6 +214,10 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				double wordEnd = word.end;
 				double wordLen = wordEnd-wordStart
 				List<String> phonemes =dict.find(w)
+				if(phonemes==null) {
+					println "\n\n unknown word "+w+"\n\n"
+					return;
+				}
 				double phonemeLength = wordLen/phonemes.size()
 				for(int i=0;i<phonemes.size();i++) {
 					String phoneme = phonemes.get(i);
@@ -344,9 +348,6 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				}
 				if(ret==null)
 					ret=AudioStatus.X_NO_SOUND;
-				if(current!=ret) {
-					println timeCodedVisemes
-				}
 				return ret;
 			}
 		});
