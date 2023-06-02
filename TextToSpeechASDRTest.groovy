@@ -62,8 +62,9 @@ public double mouthOpenVector(AudioStatus s) {
 		return 0.1;
 	case AudioStatus.H_L_SOUNDS:
 		return 0.9;
-	case AudioStatus.X_NO_SOUND:
 	case AudioStatus.A_PBM_SOUNDS:
+		return 0.05
+	case AudioStatus.X_NO_SOUND:
 	default:
 		break;
 	}
