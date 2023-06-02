@@ -44,7 +44,7 @@ Type partailType = new TypeToken<VoskPartial>() {}.getType();
 Type resultType = new TypeToken<VoskResultl>() {}.getType();
 
 Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
-ArpabetToBlair =new HashMap<>();
+Map<String, AudioStatus>ArpabetToBlair =new HashMap<>();
 ArpabetToBlair.put("-", AudioStatus.X_NO_SOUND);
 ArpabetToBlair.put("aa", AudioStatus.D_AA_SOUNDS);
 ArpabetToBlair.put("ae", AudioStatus.D_AA_SOUNDS);
@@ -97,25 +97,32 @@ ArpabetToBlair.put("zh", AudioStatus.B_KST_SOUNDS);
 
 class TimeCodedViseme{
 	AudioStatus status
-	double timePercent
 	double start
 	double end
-	public TimeCodedViseme(AudioStatus st, double s, double e, double total) {
+	double total
+	public TimeCodedViseme(AudioStatus st, double s, double e, double t) {
 		status=st;
 		start=s
 		end=e
-		timePercent=(end/total)*100.0
+		total=t
+	}
+	double getStartPercentage() {
+		return ((start/total)*100.0)
+	}
+	double getEndPercentage() {
+		return ((end/total)*100.0)
 	}
 	String toString() {
-		return status.toString()+" "+timePercent
+		return status.toString()+" start percent "+getStartPercentage()+" ends at "+getEndPercentage() 
 	}
 }
 
 public class PhoneticDictionary {
 	private Map<String, List<String>> dictionary;
-
-	public PhoneticDictionary(File f) {
+	Map<String, AudioStatus>ArpabetToBlair;
+	public PhoneticDictionary(File f,Map<String, AudioStatus>a) {
 		dictionary = new HashMap<>();
+		ArpabetToBlair=a
 		init(f)
 	}
 
@@ -239,7 +246,7 @@ public class PhoneticDictionary {
 
 AudioPlayer.setLambda(new IAudioProcessingLambda(){
 			File phoneticDatabaseFile = ScriptingEngine.fileFromGit("https://github.com/madhephaestus/TextToSpeechASDRTest.git", "cmudict-0.7b.txt")
-			PhoneticDictionary dict = new PhoneticDictionary(phoneticDatabaseFile)
+			PhoneticDictionary dict = new PhoneticDictionary(phoneticDatabaseFile,ArpabetToBlair)
 			Model model = new Model(ScriptingEngine.getWorkspace().getAbsolutePath()+"/vosk-model-en-us-daanzu-20200905/");
 			AudioFormat format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 60000, 16, 2, 4, 44100, false);
 //
@@ -276,8 +283,8 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				for(int i=0;i<phonemes.size();i++) {
 					String phoneme = phonemes.get(i);
 					AudioStatus stat = toStatus(phoneme)
-					double myStart = wordStart+((i==0)?0.0:phonemeLength*((double)i-1))
-					double myEnd = wordStart+phonemeLength*((double)i)
+					double myStart = wordStart+phonemeLength*((double)i)
+					double myEnd = wordStart+phonemeLength*((double)(i+1))
 					TimeCodedViseme tc = new TimeCodedViseme(stat, myStart,myEnd, secLen)
 					if(timeCodedVisemes.size()>0) {
 						TimeCodedViseme tcLast = timeCodedVisemes.get(timeCodedVisemes.size()-1)
@@ -295,7 +302,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 			}
 
 			private void add(TimeCodedViseme v) {
-				//println v
+				println "Adding "+ v
 				timeCodedVisemes.add(v)
 			}
 
@@ -313,11 +320,12 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				
 				words=0;
 				double positionInTrack =0;
-						
+				def getAudioInputStream = AudioSystem.getAudioInputStream(f)
+				long durationInMillis = 1000 * getAudioInputStream.getFrameLength() / getAudioInputStream.getFormat().getFrameRate();
+				long start= System.currentTimeMillis()
 				Thread t=new Thread({
 					try {
-						def getAudioInputStream = AudioSystem.getAudioInputStream(f)
-						long durationInMillis = 1000 * getAudioInputStream.getFrameLength() / getAudioInputStream.getFormat().getFrameRate();
+						
 						double secLen = ((double)durationInMillis)/1000.0
 						AudioInputStream ais =AudioSystem.getAudioInputStream(format,getAudioInputStream);
 						Recognizer recognizer = new Recognizer(model, 120000)
@@ -345,6 +353,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 						VoskResultl database = gson.fromJson(recognizer.getFinalResult(), resultType);
 						recognizer.close()
 						processWords(database.result,durationInMillis)
+						positionInTrack=100;
 						if(timeCodedVisemes.size()>0) {
 							TimeCodedViseme tcLast = timeCodedVisemes.get(timeCodedVisemes.size()-1)
 							// termination sound of nothing
@@ -356,9 +365,12 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 					}
 				})
 				t.start()
-				while(t.isAlive() && positionInTrack<1) {
+				
+				while(t.isAlive() && positionInTrack<1 && (System.currentTimeMillis()-start<durationInMillis)) {
 					Thread.sleep(1)
 				}
+				if(t.isAlive())
+					t.interrupt()
 				println "Visemes added, start audio.. "
 			}
 			public AudioInputStream startProcessing(AudioInputStream ais, String TTSString) {
@@ -396,7 +408,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				if (timeCodedVisemes.size() > 0) {
 					TimeCodedViseme map = timeCodedVisemes.get(0);
 					AudioStatus key = map.status
-					double value = map.timePercent
+					double value = map.getEndPercentage()
 					if (percent > value) {
 						timeCodedVisemes.remove(0);
 						if(timeCodedVisemes.size()>0)
@@ -405,14 +417,16 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 							println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
 							ret= AudioStatus.X_NO_SOUND
 						}
-					}
-					if(ret==null)
+					}else if(percent>map.getStartPercentage())
 						ret=key;
 				}else {
 					println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
 				}
 				if(ret==null)
-					ret=AudioStatus.X_NO_SOUND;
+					ret=current;
+				if(current!=ret) {
+					println ret.toString()+" staarting at "+percent
+				}	
 				return ret;
 			}
 		});

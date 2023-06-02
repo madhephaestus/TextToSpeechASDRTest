@@ -48,8 +48,6 @@ AbstractLink mouth =head.getAllDHChains().get(0).getAbstractLink(0)
 ScriptingEngine.gitScriptRun("https://github.com/madhephaestus/TextToSpeechASDRTest.git", "VoskLipSync.groovy")
 public double mouthOpenVector(AudioStatus s) {
 	switch(s) {
-	case AudioStatus.A_PBM_SOUNDS:
-		break;
 	case AudioStatus.B_KST_SOUNDS:
 		return 0.3;
 	case AudioStatus.C_EH_AE_SOUNDS:
@@ -63,8 +61,9 @@ public double mouthOpenVector(AudioStatus s) {
 	case AudioStatus.G_F_V_SOUNDS:
 		return 0.1;
 	case AudioStatus.H_L_SOUNDS:
-		return 1;
+		return 0.9;
 	case AudioStatus.X_NO_SOUND:
+	case AudioStatus.A_PBM_SOUNDS:
 	default:
 		break;
 	}
