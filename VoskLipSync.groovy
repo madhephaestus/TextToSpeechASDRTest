@@ -21,6 +21,8 @@ import org.vosk.LibVosk;
 import org.vosk.Model;
 import org.vosk.LogLevel;
 import org.vosk.Recognizer;
+import net.lingala.zip4j.ZipFile
+import net.lingala.zip4j.exception.ZipException
 
 class VoskResultWord{
 	double conf;
@@ -243,11 +245,39 @@ public class PhoneticDictionary {
 		return phonemes;
 	}
 }
+String modelName = "vosk-model-en-us-daanzu-20200905";
+String pathTOModel = ScriptingEngine.getWorkspace().getAbsolutePath()+"/"+modelName+".zip"
+File zipfile = new File(pathTOModel)
+
+if(!zipfile.exists()) {
+
+	String urlStr = "https://alphacephei.com/vosk/models/"+modelName+".zip"
+	URL url = new URL(urlStr);
+	BufferedInputStream bis = new BufferedInputStream(url.openStream());
+	FileOutputStream fis = new FileOutputStream(zipfile);
+	byte[] buffer = new byte[1024];
+	int count = 0;
+	System.out.println("Downloading Vosk Model "+modelName)
+	while ((count = bis.read(buffer, 0, 1024)) != -1) {
+		fis.write(buffer, 0, count);
+		System.out.print(".")
+	}
+	fis.close();
+	bis.close();
+
+	String source = zipfile.getAbsolutePath();
+	String destination = ScriptingEngine.getWorkspace().getAbsolutePath() ;
+	System.out.println("Unzipping Vosk Model "+modelName)
+	ZipFile zipFile = new ZipFile(source);
+	zipFile.extractAll(destination);
+
+}
+Model model = new Model(ScriptingEngine.getWorkspace().getAbsolutePath()+"/"+modelName+"/");
 
 AudioPlayer.setLambda(new IAudioProcessingLambda(){
+	
 			File phoneticDatabaseFile = ScriptingEngine.fileFromGit("https://github.com/madhephaestus/TextToSpeechASDRTest.git", "cmudict-0.7b.txt")
 			PhoneticDictionary dict = new PhoneticDictionary(phoneticDatabaseFile,ArpabetToBlair)
-			Model model = new Model(ScriptingEngine.getWorkspace().getAbsolutePath()+"/vosk-model-en-us-daanzu-20200905/");
 			AudioFormat format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 60000, 16, 2, 4, 44100, false);
 //
 //			Recognizer recognizer = new Recognizer(model, 120000)

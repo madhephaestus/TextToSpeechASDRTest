@@ -74,6 +74,8 @@ ISpeakingProgress sp ={double percent,AudioStatus status->
 	double isMouthOpen = mouthOpenVector(status)
 	mouth.setTargetEngineeringUnits(isMouthOpen*-20.0);
 	mouth.flush(0);
+	Thread.sleep(0,100)
+	
 
 }
 
