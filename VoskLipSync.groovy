@@ -130,7 +130,7 @@ public class PhoneticDictionary {
 		return result.toString().toLowerCase();
 	}
 
-	private void parseEntry(String entry, Map<String, List<String>> d) {
+	private void parseEntry(String entry, Map<String, ArrayList<String>> d) {
 		String[] tokens = entry.split(" ");
 		if (tokens.length < 2) {
 			return null;
@@ -149,8 +149,8 @@ public class PhoneticDictionary {
 		d.put(word, mine);
 	}
 
-	private Map<String, List<String>> parseDictionary(String dictionaryText) {
-		Map<String, List<String>> dictionary = new HashMap<>();
+	private Map<String, ArrayList<String>> parseDictionary(String dictionaryText) {
+		Map<String, ArrayList<String>> dictionary = new HashMap<>();
 		String[] entries = dictionaryText.split("\n");
 		for (String entry : entries) {
 			if (entry.startsWith(";;;")) {
@@ -180,7 +180,7 @@ public class PhoneticDictionary {
 		dictionary = parseDictionary(dictionaryText);
 	}
 
-	public List<String> find(String word) {
+	public ArrayList<String> find(String word) {
 		return dictionary.get(word);
 	}
 }
@@ -190,8 +190,8 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 			PhoneticDictionary dict = new PhoneticDictionary(phoneticDatabaseFile)
 			Model model = new Model(ScriptingEngine.getWorkspace().getAbsolutePath()+"/vosk-model-en-us-daanzu-20200905/");
 			AudioFormat format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 60000, 16, 2, 4, 44100, false);
-
-			Recognizer recognizer = new Recognizer(model, 120000)
+//
+//			Recognizer recognizer = new Recognizer(model, 120000)
 			int numBytesRead=0;
 			int CHUNK_SIZE = 4096;
 			byte[] abData = new byte[CHUNK_SIZE];
@@ -210,13 +210,41 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 				String w = word.word;
 				if(w==null)
 					return;
+				ArrayList<String>  extra=null
+				if(w.endsWith("n't")) {
+					String newW =w.substring(0,w.length()-3)
+					println "Contraction reduced "+newW+" from "+w
+					w=newW
+					extra =["n", "t"]
+				}
+				if(w.endsWith("'ll")) {
+					String newW =w.substring(0,w.length()-3)
+					println "Contraction reduced "+newW+" from "+w
+					w=newW
+					extra =["uw", "l"]
+				}
+				if(w.endsWith("'s")) {
+					String newW =w.substring(0,w.length()-2)
+					println "Contraction reduced "+newW+" from "+w
+					w=newW
+					extra =["s"]
+				}
+				if(w.endsWith("'d")) {
+					String newW =w.substring(0,w.length()-2)
+					println "Contraction reduced "+newW+" from "+w
+					w=newW
+					extra =["d"]
+				}
 				double wordStart = word.start
 				double wordEnd = word.end;
 				double wordLen = wordEnd-wordStart
-				List<String> phonemes =dict.find(w)
+				ArrayList<String> phonemes =dict.find(w)
 				if(phonemes==null) {
 					println "\n\n unknown word "+w+"\n\n"
 					return;
+				}
+				if(extra!=null) {
+					phonemes.addAll(extra)
 				}
 				double phonemeLength = wordLen/phonemes.size()
 				for(int i=0;i<phonemes.size();i++) {
@@ -264,8 +292,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 						long durationInMillis = 1000 * getAudioInputStream.getFrameLength() / getAudioInputStream.getFormat().getFrameRate();
 						double secLen = ((double)durationInMillis)/1000.0
 						AudioInputStream ais =AudioSystem.getAudioInputStream(format,getAudioInputStream);
-						//println "Time of clip "+secLen+" sec"
-						recognizer.reset()
+						Recognizer recognizer = new Recognizer(model, 120000)
 						recognizer.setWords(true)
 						recognizer.setPartialWords(true)
 						numBytesRead=0;
@@ -283,6 +310,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 							}
 						}
 						VoskResultl database = gson.fromJson(recognizer.getFinalResult(), resultType);
+						recognizer.close()
 						processWords(database.result,durationInMillis)
 						if(timeCodedVisemes.size()>0) {
 							TimeCodedViseme tcLast = timeCodedVisemes.get(timeCodedVisemes.size()-1)
@@ -302,7 +330,7 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 			}
 			public AudioInputStream startProcessing(AudioInputStream ais, String TTSString) {
 				timeCodedVisemes = new ArrayList<>();
-				recognizer = new Recognizer(model, 120000)
+				
 				File audio = new File(ScriptingEngine.getWorkspace().getAbsolutePath() + "/tmp-tts.wav");
 				try {
 					long start = System.currentTimeMillis()
@@ -338,10 +366,10 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 					double value = map.timePercent
 					if (percent > value) {
 						timeCodedVisemes.remove(0);
-//						if(timeCodedVisemes.size()>0)
-//							ret = timeCodedVisemes.get(0).status
-//						else
-//							ret= AudioStatus.X_NO_SOUND
+						if(timeCodedVisemes.size()>0)
+							ret = timeCodedVisemes.get(0).status
+						else
+							ret= AudioStatus.X_NO_SOUND
 					}
 					if(ret==null)
 						ret=key;
