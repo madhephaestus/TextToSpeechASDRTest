@@ -232,12 +232,12 @@ AudioPlayer.setLambda(new IAudioProcessingLambda(){
 					add(tc)
 				}
 
-				println "Word "+w+" starts at "+wordStart+" ends at "+wordEnd+" each phoneme length "+phonemeLength+" "+phonemes+" "+timeCodedVisemes
+				//println "Word "+w+" starts at "+wordStart+" ends at "+wordEnd+" each phoneme length "+phonemeLength+" "+phonemes+" "+timeCodedVisemes
 
 			}
 
 			private void add(TimeCodedViseme v) {
-				println v
+				//println v
 				timeCodedVisemes.add(v)
 			}
 
