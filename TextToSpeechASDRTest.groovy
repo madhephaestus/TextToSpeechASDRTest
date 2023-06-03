@@ -44,8 +44,8 @@ while(get.getProcesIndictor().get()<1){
 DHParameterKinematics spine = base.getAllDHChains().get(0);
 MobileBase head = spine.getSlaveMobileBase(5)
 AbstractLink mouth =head.getAllDHChains().get(0).getAbstractLink(0)
-
-ScriptingEngine.gitScriptRun("https://github.com/madhephaestus/TextToSpeechASDRTest.git", "VoskLipSync.groovy")
+AudioPlayer.setLambda (com.neuronrobotics.bowlerstudio.lipsync.VoskLipSync.get());
+//ScriptingEngine.gitScriptRun("https://github.com/madhephaestus/TextToSpeechASDRTest.git", "VoskLipSync.groovy")
 public double mouthOpenVector(AudioStatus s) {
 	switch(s) {
 	case AudioStatus.B_KST_SOUNDS:
