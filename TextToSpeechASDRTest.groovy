@@ -237,7 +237,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		});
 		t.start();
 
-		while (t.isAlive() && positionInTrack < 1 && (System.currentTimeMillis() - start < durationInMillis)) {
+		while (t.isAlive() && positionInTrack < 10 && (System.currentTimeMillis() - start < durationInMillis)) {
 			try {
 				Thread.sleep(1);
 			} catch (InterruptedException e) {
@@ -293,13 +293,13 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 				if (timeCodedVisemes.size() > 0)
 					ret = timeCodedVisemes.get(0).status;
 				else {
-					// println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
+					 println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
 					ret = AudioStatus.X_NO_SOUND;
 				}
 			} else if (percent > map.getStartPercentage())
 				ret = key;
 		} else {
-			// println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
+		  println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
 		}
 		if (ret == null)
 			ret = current;
