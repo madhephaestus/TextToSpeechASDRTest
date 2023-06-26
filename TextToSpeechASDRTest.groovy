@@ -329,6 +329,7 @@ class TabManagerDevice{
 	boolean connect() {
 		connected=true;
 		t.setContent(imageView)
+		t.setText(myName)
 		t.setOnCloseRequest({event ->
 			disconnect()
 		});
