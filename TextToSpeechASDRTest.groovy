@@ -133,11 +133,13 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		}
 
 		double phonemeLength = wordLen / phonemes.size();
+		//@finn this is where to adjust the lead/lag of the lip sync with the audio playback
+		double timeLeadLag = 0.2
 		for (int i = 0; i < phonemes.size(); i++) {
 			String phoneme = phonemes.get(i);
 			AudioStatus stat = toStatus(phoneme);
-			double myStart = wordStart + phonemeLength * ((double) i);
-			double myEnd = wordStart + phonemeLength * ((double) (i + 1));
+			double myStart = wordStart + phonemeLength * ((double) i)+timeLeadLag;
+			double myEnd = wordStart + phonemeLength * ((double) (i + 1))+timeLeadLag;
 			TimeCodedViseme tc = new TimeCodedViseme(stat, myStart, myEnd, secLen);
 			if (timeCodedVisemes.size() > 0) {
 				TimeCodedViseme tcLast = timeCodedVisemes.get(timeCodedVisemes.size() - 1);
