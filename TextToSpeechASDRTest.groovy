@@ -326,6 +326,9 @@ AudioPlayer.setLambda (new VoskLipSyncLocal());
 
 ImageView imageView = new ImageView(images.get(AudioStatus.X_NO_SOUND));
 laststatus=null
+
+AudioStatus.ArpabetToBlair.put("-", AudioStatus.X_NO_SOUND)
+
 ISpeakingProgress sp ={double percent,AudioStatus status->
 	if(status!=laststatus) {
 		println percent+" " +status
