@@ -327,6 +327,7 @@ AudioPlayer.setLambda (new VoskLipSyncLocal());
 ImageView imageView = new ImageView(images.get(AudioStatus.X_NO_SOUND));
 laststatus=null
 
+// from https://github.com/CommonWealthRobotics/bowler-script-kernel/blob/development/src/main/java/com/neuronrobotics/bowlerstudio/AudioStatus.java#L92
 AudioStatus.ArpabetToBlair.put("-", AudioStatus.X_NO_SOUND)
 
 ISpeakingProgress sp ={double percent,AudioStatus status->
