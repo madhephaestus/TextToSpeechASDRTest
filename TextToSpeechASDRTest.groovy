@@ -135,7 +135,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 
 		double phonemeLength = wordLen / phonemes.size();
 		//@finn this is where to adjust the lead/lag of the lip sync with the audio playback
-		double timeLeadLag = 0//0.2
+		double timeLeadLag = 0.05
 		for (int i = 0; i < phonemes.size(); i++) {
 			String phoneme = phonemes.get(i);
 			AudioStatus stat = toStatus(phoneme);
@@ -379,7 +379,7 @@ ISpeakingProgress sp ={double percent,AudioStatus status->
 
 double i=800
 try {
-	BowlerKernel.speak("I can do mouth shapes with my very articulate mouth", 100, 0, i, 1.0, 1.0,sp)
+	BowlerKernel.speak("this isnt spoken, I can do mouth shapes with my very articulate mouth", 100, 0, i, 1.0, 1.0,sp)
 }catch(Throwable tr) {
 	BowlerStudio.printStackTrace(tr)
 }
