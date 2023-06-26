@@ -1,4 +1,5 @@
 
+import com.neuronrobotics.bowlerstudio.AudioPlayer
 import com.neuronrobotics.bowlerstudio.AudioStatus
 import com.neuronrobotics.bowlerstudio.BowlerKernel
 import com.neuronrobotics.bowlerstudio.BowlerStudio
@@ -30,10 +31,16 @@ for(AudioStatus s:EnumSet.allOf(AudioStatus.class)) {
 	Image image = new Image(new FileInputStream(f.getAbsolutePath()));
 	images.put(s, image)
 }
-ImageView imageView = new ImageView(images.get(AudioStatus.X_NO_SOUND));
 
+AudioPlayer.setLambda (com.neuronrobotics.bowlerstudio.lipsync.VoskLipSync.get());
+
+ImageView imageView = new ImageView(images.get(AudioStatus.X_NO_SOUND));
+laststatus=null
 ISpeakingProgress sp ={double percent,AudioStatus status->
-	//println percent+" " +status
+	if(status!=laststatus) {
+		println percent+" " +status
+		laststatus=status;
+	}
 	Platform.runLater({
 		imageView.setImage(images.get(status))
 	})
