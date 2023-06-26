@@ -36,6 +36,7 @@ import com.neuronrobotics.sdk.addons.kinematics.AbstractLink
 import com.neuronrobotics.sdk.addons.kinematics.DHParameterKinematics
 import com.neuronrobotics.sdk.addons.kinematics.MobileBase
 import com.neuronrobotics.sdk.common.DeviceManager
+import com.neuronrobotics.sdk.common.IDeviceProvider
 import com.neuronrobotics.sdk.util.ThreadUtil
 
 import javafx.scene.control.Tab
@@ -134,7 +135,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 
 		double phonemeLength = wordLen / phonemes.size();
 		//@finn this is where to adjust the lead/lag of the lip sync with the audio playback
-		double timeLeadLag = 0.2
+		double timeLeadLag = 0//0.2
 		for (int i = 0; i < phonemes.size(); i++) {
 			String phoneme = phonemes.get(i);
 			AudioStatus stat = toStatus(phoneme);
@@ -311,6 +312,42 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 
 }
 
+class TabManagerDevice{
+	String myName;
+	boolean connected=false;
+	ImageView imageView = new ImageView();
+	Tab t = new Tab()
+	public TabManagerDevice(String name) {
+		myName=name;
+		
+	}
+	
+	String getName() {
+		return myName
+	}
+	
+	boolean connect() {
+		connected=true;
+		t.setContent(imageView)
+		t.setOnCloseRequest({event ->
+			disconnect()
+		});
+		BowlerStudioController.addObject(t, null)
+		return connected
+	}
+	void disconnect() {
+		if(connected) {
+			BowlerStudioController.removeObject(t)
+		}
+		
+	}
+}
+
+def tabHolder = DeviceManager.getSpecificDevice("TabHolder", {
+	TabManagerDevice dev = new TabManagerDevice("TabHolder")
+	dev.connect()
+	return dev
+})
 
 HashMap<AudioStatus,Image> images = new HashMap<>()
 String url = "https://github.com/madhephaestus/TextToSpeechASDRTest.git"
@@ -324,7 +361,7 @@ for(AudioStatus s:EnumSet.allOf(AudioStatus.class)) {
 //AudioPlayer.setLambda (com.neuronrobotics.bowlerstudio.lipsync.VoskLipSync.get());
 AudioPlayer.setLambda (new VoskLipSyncLocal());
 
-ImageView imageView = new ImageView(images.get(AudioStatus.X_NO_SOUND));
+ImageView imageView = tabHolder.imageView
 laststatus=null
 
 // from https://github.com/CommonWealthRobotics/bowler-script-kernel/blob/development/src/main/java/com/neuronrobotics/bowlerstudio/AudioStatus.java#L92
@@ -332,7 +369,7 @@ AudioStatus.ArpabetToBlair.put("-", AudioStatus.X_NO_SOUND)
 
 ISpeakingProgress sp ={double percent,AudioStatus status->
 	if(status!=laststatus) {
-		println percent+" " +status
+		//println percent+" " +status
 		laststatus=status;
 	}
 	Platform.runLater({
@@ -340,14 +377,9 @@ ISpeakingProgress sp ={double percent,AudioStatus status->
 	})
 }
 
-Tab t = new Tab()
-t.setContent(imageView)
-BowlerStudioController.addObject(t, null)
-Thread.sleep(1000)
-
 double i=800
 try {
-	BowlerKernel.speak("The mighty Zoltar sees your future! You have much to look forward to!", 100, 0, i, 1.0, 1.0,sp)
+	BowlerKernel.speak("I can do mouth shapes with my very articulate mouth", 100, 0, i, 1.0, 1.0,sp)
 }catch(Throwable tr) {
 	BowlerStudio.printStackTrace(tr)
 }
