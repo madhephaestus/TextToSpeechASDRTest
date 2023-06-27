@@ -9,7 +9,23 @@ import javax.sound.sampled.DataLine
 import javax.sound.sampled.LineUnavailableException
 import javax.sound.sampled.TargetDataLine
 import javax.sound.sampled.UnsupportedAudioFileException
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
+import javax.sound.sampled.AudioInputStream;
+
+import marytts.LocalMaryInterface;
+import marytts.MaryInterface;
+import marytts.exceptions.MaryConfigurationException;
+import marytts.exceptions.SynthesisException;
+import marytts.modules.synthesis.Voice;
+import marytts.signalproc.effects.AudioEffect;
+import marytts.signalproc.effects.AudioEffects;
 import org.vosk.Model
 import org.vosk.Recognizer
 
@@ -47,6 +63,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
+import marytts.MaryInterface
 import net.lingala.zip4j.ZipFile
 
 
@@ -368,7 +385,7 @@ laststatus=null
 // from https://github.com/CommonWealthRobotics/bowler-script-kernel/blob/development/src/main/java/com/neuronrobotics/bowlerstudio/AudioStatus.java#L92
 AudioStatus.ArpabetToBlair.put("-", AudioStatus.X_NO_SOUND)
 
-ISpeakingProgress sp ={double percent,AudioStatus status->
+ISpeakingProgress progress ={double percent,AudioStatus status->
 	if(status!=laststatus) {
 		//println percent+" " +status
 		laststatus=status;
@@ -378,11 +395,18 @@ ISpeakingProgress sp ={double percent,AudioStatus status->
 	})
 }
 
-double i=800
-try {
-	BowlerKernel.speak("this isnt spoken, I can do mouth shapes with my very articulate mouth", 100, 0, i, 1.0, 1.0,sp)
-}catch(Throwable tr) {
-	BowlerStudio.printStackTrace(tr)
-}
+MaryInterface marytts = new LocalMaryInterface();
+
+String text = "Behold the mighty Zoltar!"
+AudioInputStream audio = marytts.generateAudio(text)
+
+AudioPlayer tts = new AudioPlayer(text);
+tts.setAudio(audio);
+tts.setGain((float)1.0);
+tts.setDaemon(true);
+if(progress!=null)
+	tts.setSpeakProgress(progress);
+tts.start();// start the thread playing
+tts.join();// wait for thread to finish before returniign
 
 
