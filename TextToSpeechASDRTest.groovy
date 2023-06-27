@@ -389,10 +389,11 @@ ISpeakingProgress progress ={double percent,AudioStatus status->
 	if(status!=laststatus) {
 		//println percent+" " +status
 		laststatus=status;
+		Platform.runLater({
+			imageView.setImage(images.get(status))
+		})
 	}
-	Platform.runLater({
-		imageView.setImage(images.get(status))
-	})
+
 }
 
 MaryInterface marytts = new LocalMaryInterface();
