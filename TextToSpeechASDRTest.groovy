@@ -287,7 +287,11 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
         //mtc -- this is where we can fuck with sequencing and add transition frames.  the transition's probably going to require some sort of javaFX bullshit but we'll see.
 		for (int i = 0; i < phonemes.size(); i++) {
 			String phoneme = phonemes.get(i);
-			AudioStatus stat = toStatus(phoneme);            
+			AudioStatus stat = toStatus(phoneme);
+            
+            //short the LeadLag for the H_L_SOUNDS viseme
+            if (stat == AudioStatus.H_L_SOUNDS) { timeLeadLag = -(1/24.0/128) }
+            
 			double myStart = Math.max(wordStart + phonemeLength * ((double) i)+timeLeadLag ,  0);
 			double myEnd = wordStart + phonemeLength * ((double) (i + 1))+timeLeadLag;
             double segLen = myEnd - myStart;
@@ -523,6 +527,7 @@ ImageView imageView = tabHolder.imageView
 laststatus=null
 
 
+/*
 //calls the non-Mary voice option
 ISpeakingProgress sp ={double percent,AudioStatus status->
 	if(status!=laststatus) {
@@ -540,18 +545,18 @@ try {
 	//BowlerKernel.speak("The mighty Zoltar sees your future.  You have much to look forward to!", 100, 0, i, 1.0, 1.0,sp)
 	//BowlerKernel.speak("abracadabra", 100, 0, i, 1.0, 1.0,sp)
 	//BowlerKernel.speak("Look alive, wageslaves!", 100, 0, i, 1.0, 1.0,sp)
-	BowlerKernel.speak("Once upon a midnight dreary, while I pondered, weak and weary.  Over many a quaint and curious volume of forgotten lore", 100, 0, i, 1.0, 1.0, sp)
+	//BowlerKernel.speak("Once upon a midnight dreary, while I pondered, weak and weary.  Over many a quaint and curious volume of forgotten lore", 100, 0, i, 1.0, 1.0, sp)
     //BowlerKernel.speak("While I nodded, nearly napping, suddenly there came a tapping, As of some one gently rapping, rapping at my chamber door.  Tis some visitor, I muttered, tapping at my chamber door.  Only this and nothing more." , 100, 0, i, 1.0, 1.0,sp)
-    //BowlerKernel.speak("Ah distinctly I remember, it was in the bleak December.  And each separate dying ember wrought its ghost upon the floor.", 100, 0, i, 1.0, 1.0,sp)
+    BowlerKernel.speak("Ah distinctly I remember, it was in the bleak December.  And each separate dying ember wrought its ghost upon the floor.", 100, 0, i, 1.0, 1.0,sp)
     //BowlerKernel.speak("Remember remember the bleak December.", 100, 0, i, 1.0, 1.0,sp)
     //BowlerKernel.speak("I wanna liv like common people.  I wanna do what ever common people do.  Wanna sleep with common people.  I wanna sleep with, common people.  Like you.", 100, 0, i, 1.0, 1.0,sp)
     //BowlerKernel.speak("", 100, 0, i, 1.0, 1.0,sp)
 }catch(Throwable tr) {
 	BowlerStudio.printStackTrace(tr)
 }
+*/
 
 
-/*
 ISpeakingProgress progress ={double percent,AudioStatus status->
 	if(status!=laststatus) {
 		//println percent+" " +status
@@ -587,4 +592,3 @@ if(progress!=null)
 	tts.setSpeakProgress(progress);
 tts.start();// start the thread playing
 tts.join();// wait for thread to finish before returniign
-*/
