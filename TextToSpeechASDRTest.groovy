@@ -372,8 +372,10 @@ String url = "https://github.com/madhephaestus/TextToSpeechASDRTest.git"
 for(AudioStatus s:EnumSet.allOf(AudioStatus.class)) {
 	File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/img/lisa-"+s.parsed+".png")
 	println "Loading "+f.getAbsolutePath()
+	try{
 	Image image = new Image(new FileInputStream(f.getAbsolutePath()));
 	images.put(s, image)
+	}catch(Exception ex){}
 }
 
 //AudioPlayer.setLambda (com.neuronrobotics.bowlerstudio.lipsync.VoskLipSync.get());
