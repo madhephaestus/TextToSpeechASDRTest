@@ -1,4 +1,3 @@
-
 import java.lang.reflect.Type
 
 import javax.sound.sampled.AudioFileFormat
@@ -478,14 +477,19 @@ def tabHolder = DeviceManager.getSpecificDevice("TabHolder", {
 HashMap<AudioStatus,Image> images = new HashMap<>()
 
 //local img_path string= 
-//String url = "https://github.com/madhephaestus/TextToSpeechASDRTest.git"
+String url = "https://github.com/madhephaestus/TextToSpeechASDRTest.git"
 String local_img_path = "/Users/michaelfinnerty/Documents/projects/active_projects/crystal_ball/bowler_bits/TextToSpeechASDRTest/img5/magenta-"
 
 for(AudioStatus s:EnumSet.allOf(AudioStatus.class)) {
-	//File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/img/lisa-"+s.parsed+".png")
-    File f = new File(local_img_path + s.parsed + ".png")
+	File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/img5/magenta-"+s.parsed+".png")
+	try{
+    //File f = new File(local_img_path + s.parsed + ".png")
 	Image image = new Image(new FileInputStream(f.getAbsolutePath()));
+	
 	images.put(s, image)
+	}catch(Exception ex){
+		BowlerStudio.printStackTrace(ex)
+	}
     
 	println "magenta- " + s.parsed + ".png loaded"
 }
