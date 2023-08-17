@@ -369,9 +369,13 @@ def tabHolder = DeviceManager.getSpecificDevice("TabHolder", {
 
 HashMap<AudioStatus,Image> images = new HashMap<>()
 String url = "https://github.com/madhephaestus/TextToSpeechASDRTest.git"
+String local_img_path = "/Users/michaelfinnerty/Documents/projects/active_projects/crystal_ball/bowler_bits/TextToSpeechASDRTest/img5/magenta-"
+
 for(AudioStatus s:EnumSet.allOf(AudioStatus.class)) {
-	File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/img/lisa-"+s.parsed+".png")
-	println "Loading "+f.getAbsolutePath()
+	//File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/img/lisa-"+s.parsed+".png")
+    //mtc -- revert the file set on this to the line above before submitting pull request 
+	File f = new File(local_img_path + s.parsed + ".png")
+    println "Loading "+f.getAbsolutePath()
 	try{
 	Image image = new Image(new FileInputStream(f.getAbsolutePath()));
 	images.put(s, image)

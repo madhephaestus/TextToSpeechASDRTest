@@ -5,3 +5,8 @@
 /.cproject
 /cache/
 /*.class
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
