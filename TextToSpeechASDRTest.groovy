@@ -472,8 +472,33 @@ AudioPlayer.setLambda (new VoskLipSyncLocal());
 ImageView imageView = tabHolder.imageView
 laststatus=null
 
+/*
+ *  changes to the rhubarb mappings
+ */
+
 // from https://github.com/CommonWealthRobotics/bowler-script-kernel/blob/development/src/main/java/com/neuronrobotics/bowlerstudio/AudioStatus.java#L92
-AudioStatus.ArpabetToBlair.put("-", AudioStatus.X_NO_SOUND)
+
+//rhubarb docs
+AudioStatus.ArpabetToBlair.put("ao", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("er", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ae", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("eh", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("q", AudioStatus.B_KST_SOUNDS)
+
+
+//fn opinion
+AudioStatus.ArpabetToBlair.put("hh", AudioStatus.D_AA_SOUNDS);
+AudioStatus.ArpabetToBlair.put("uh", AudioStatus.F_UW_OW_W_SOUNDS);
+AudioStatus.ArpabetToBlair.put("aa", AudioStatus.C_EH_AE_SOUNDS);
+AudioStatus.ArpabetToBlair.put("ih", AudioStatus.C_EH_AE_SOUNDS);
+
+AudioStatus.ArpabetToBlair.put("k", AudioStatus.C_EH_AE_SOUNDS);
+AudioStatus.ArpabetToBlair.put("n", AudioStatus.C_EH_AE_SOUNDS);
+AudioStatus.ArpabetToBlair.put("r", AudioStatus.E_AO_ER_SOUNDS);
+
+AudioStatus.ArpabetToBlair.put("d", AudioStatus.H_L_SOUNDS);
+AudioStatus.ArpabetToBlair.put("y", AudioStatus.C_EH_AE_SOUNDS);
+AudioStatus.ArpabetToBlair.put("z", AudioStatus.C_EH_AE_SOUNDS);
 
 ISpeakingProgress progress ={double percent,AudioStatus status->
 	if(status!=laststatus) {
@@ -488,7 +513,17 @@ ISpeakingProgress progress ={double percent,AudioStatus status->
 
 MaryInterface marytts = new LocalMaryInterface();
 
-String text = "Behold the mighty Zoltar!"
+//String text = "Behold the mighty Zoltar!"
+//String text = "The mighty Zoltar sees your future.  You have much to look forward to!"
+//String text = "abracadabra",
+//String text = "Look alive, wageslaves!"
+String text = "Once upon a midnight dreary, while I pondered, weak and weary.  Over many a quaint and curious volume of forgotten lore"
+//String text = "While I nodded, nearly napping, suddenly there came a tapping, As of some one gently rapping, rapping at my chamber door.  Tis some visitor, I muttered, tapping at my chamber door.  Only this and nothing more."
+//String text = "Ah distinctly I remember, it was in the bleak December.  And each separate dying ember wrought its ghost upon the floor."
+//String text = "Remember remember the bleak December."
+//String text = "I wanna liv like common people.  I wanna do what ever common people do.  Wanna sleep with common people.  I wanna sleep with, common people.  Like you."
+//String text = ""
+
 AudioInputStream audio = marytts.generateAudio(text)
 
 AudioPlayer tts = new AudioPlayer(text);
