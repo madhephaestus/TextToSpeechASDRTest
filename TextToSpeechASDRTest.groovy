@@ -151,24 +151,108 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		}
 
 		double phonemeLength = wordLen / phonemes.size();
+        
+        Random rand = new Random();
+        double timeLeadLag = -(1/24.0/2048) //-0.0416667 // rand.nextDouble() / 10.0 //0.04
+
 		//@finn this is where to adjust the lead/lag of the lip sync with the audio playback
-		double timeLeadLag = 0.05
+        //mtc -- this is where we can fuck with sequencing and add transition frames.  the transition's probably going to require some sort of javaFX bullshit but we'll see.
 		for (int i = 0; i < phonemes.size(); i++) {
 			String phoneme = phonemes.get(i);
-			AudioStatus stat = toStatus(phoneme);
-			double myStart = wordStart + phonemeLength * ((double) i)+timeLeadLag;
+			AudioStatus stat = toStatus(phoneme);            
+			double myStart = Math.max(wordStart + phonemeLength * ((double) i)+timeLeadLag ,  0);
 			double myEnd = wordStart + phonemeLength * ((double) (i + 1))+timeLeadLag;
+            double segLen = myEnd - myStart;
 			TimeCodedViseme tc = new TimeCodedViseme(stat, myStart, myEnd, secLen);
+            
+            //adds a transitional silent viseme when a silence longer than 1/100 of a second is detected
 			if (timeCodedVisemes.size() > 0) {
 				TimeCodedViseme tcLast = timeCodedVisemes.get(timeCodedVisemes.size() - 1);
-				if (tcLast.end < myStart) {
-					// termination sound of nothing
-					TimeCodedViseme tcSilent = new TimeCodedViseme(AudioStatus.X_NO_SOUND, tcLast.end, myStart, secLen);
-					add(tcSilent);
-				}
+				if (myStart - tcLast.end > 0.03) {
+                    
+                    // for longer pauses, transition through partially open mouth to close
+                    float siLength = myStart - tcLast.end;
+                    float hLength = siLength / 3.0;
+                    float mouthClosedTime = myStart - hLength;
+                    
+					TimeCodedViseme tcSilentH = new TimeCodedViseme(AudioStatus.H_L_SOUNDS, tcLast.end, mouthClosedTime, secLen);
+					TimeCodedViseme tcSilentX = new TimeCodedViseme(AudioStatus.X_NO_SOUND, mouthClosedTime, myStart, secLen);
+                    
+                    //println "ln 297";
+					add(tcSilentH);
+					add(tcSilentX);
+                } else if (myStart - tcLast.end > 0) {
+					// short transition to partially open mouth
+					TimeCodedViseme tcSilent = new TimeCodedViseme(AudioStatus.H_L_SOUNDS, tcLast.end, myStart, secLen);
+					add(tcSilent);                    
+                }
 			}
-			add(tc);
+            
+            //looks for transition situations within a word (i.e. it bails at the last syllable)
+            if (i < phonemes.size() - 1) {
+                String next_phoneme = phonemes.get(i+1);
+                AudioStatus stat_next = toStatus(next_phoneme);
+                //identifies transition sitautions
+                //ⒶⒸⒹ and ⒷⒸⒹ
+                //ⒸⒺⒻ and ⒹⒺⒻ
+                if (
+                    //A or B preceeding D
+                    (stat_next == AudioStatus.D_AA_SOUNDS && 
+                    (stat == AudioStatus.A_PBM_SOUNDS || stat == AudioStatus.B_KST_SOUNDS)) ||
+                    //D preceeding A or B
+                    ((stat_next == AudioStatus.A_PBM_SOUNDS || stat_next == AudioStatus.B_KST_SOUNDS) &&
+                    stat == AudioStatus.D_AA_SOUNDS) ||
+                    //C or D preceeding an F
+                    (stat_next == AudioStatus.F_UW_OW_W_SOUNDS && 
+                    (stat == AudioStatus.C_EH_AE_SOUNDS || stat == AudioStatus.D_AA_SOUNDS)) ||
+                    //F preceeding a C or D
+                    ((stat_next == AudioStatus.C_EH_AE_SOUNDS || stat_next == AudioStatus.D_AA_SOUNDS) &&
+                    stat == AudioStatus.F_UW_OW_W_SOUNDS)
+                   ) {
+                    //println "transition situation detected";
+                    
+                    //determine the current length of the viseme, and the length and start point of the transition to be applied
+                    float visLength = tc.end - tc.start;
+                    float transLength = visLength / 3.0;
+                    float transStart = tc.end - transLength;
+                    
+                    AudioStatus transViseme = tc.status;
+                    
+                    
+                    //based on the situation, set the appropriate transition viseme
+                    if (stat_next == AudioStatus.F_UW_OW_W_SOUNDS || stat == AudioStatus.F_UW_OW_W_SOUNDS){
+                        //C or D found preceeding an F, or
+                        //F found preceeding a C or D
+                        //println "E_AO_ER inserted"
+                        transViseme = AudioStatus.E_AO_ER_SOUNDS
+                    } else if (stat_next == AudioStatus.D_AA_SOUNDS || stat == AudioStatus.D_AA_SOUNDS) {
+                        //A or B found preceeding a D, or
+                        //D found preceeding an A or B
+                        //println "C_EH_AE inserted"
+                        transViseme = AudioStatus.C_EH_AE_SOUNDS
+                    } else {
+                        //println "ERR_TRANSITION"
+                    }
+                    
+                    //create the transition viseme
+                    TimeCodedViseme tc_transition = new TimeCodedViseme(transViseme, transStart, tc.end, secLen);
+                    
+                    //push back the end point of the main viseme to the start point of the transition viseme
+                    tc.end = transStart;
+                    
+                    //add the modified original viseme, and then the transition viseme
+                    add(tc);
+                    add(tc_transition);
+                } else {
+                    //handles situations within words where the following viseme does not require a transition
+                    add(tc);
+                }
+            } else {
+                //handles situations at the end of words
+                add(tc);                 
+            }
 		}
+        
 
 		// println "Word "+w+" starts at "+wordStart+" ends at "+wordEnd+" each phoneme
 		// length "+phonemeLength+" "+phonemes+" "+timeCodedVisemes
