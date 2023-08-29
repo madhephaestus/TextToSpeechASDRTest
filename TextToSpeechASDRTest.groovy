@@ -144,6 +144,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		double wordStart = word.start;
 		double wordEnd = word.end;
 		double wordLen = wordEnd - wordStart;
+        //println w + ", " + wordStart + ", " + phonemes;
 		ArrayList<String> phonemes = dict.find(w);
 		if (phonemes == null) {
 			// println "\n\n unknown word "+w+"\n\n"
@@ -189,7 +190,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 			}
             
             //looks for transition situations within a word (i.e. it bails at the last syllable)
-            if (i < phonemes.size() - 1) {
+            /*if (i < phonemes.size() - 1) {
                 String next_phoneme = phonemes.get(i+1);
                 AudioStatus stat_next = toStatus(next_phoneme);
                 //identifies transition sitautions
@@ -247,10 +248,10 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
                     //handles situations within words where the following viseme does not require a transition
                     add(tc);
                 }
-            } else {
+            } else {*/
                 //handles situations at the end of words
                 add(tc);                 
-            }
+            //}
 		}
         
 
@@ -276,7 +277,14 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		}
 
 	}
-
+    
+    private void printTCV() {
+        for (int i = 0; i < timeCodedVisemes.size(); i++ ) {
+            TimeCodedViseme tcv = timeCodedVisemes.get(i);
+            println i + ', "' + tcv.status + '", ' + tcv.start + ', ' + tcv.end + ', ' + tcv.total;
+        }
+    }
+    
 	public void processRaw(File f, String ttsLocation) throws UnsupportedAudioFileException, IOException {
 
 		words = 0;
@@ -313,6 +321,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 						processWords(database.partial_result, durationInMillis);
 					}
 				}
+                //println result;
 				VoskResultl database = gson.fromJson(recognizer.getFinalResult(), resultType);
 				recognizer.close();
 				processWords(database.result, durationInMillis);
@@ -348,7 +357,8 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		if (t.isAlive()) {
 			t.interrupt();
 		}
-		// println "Visemes added, start audio.. "
+        printTCV();
+		println "Visemes added, start audio.. "
 	}
 
 	public AudioInputStream startProcessing(AudioInputStream ais, String TTSString) {
@@ -394,13 +404,13 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 				if (timeCodedVisemes.size() > 0)
 					ret = timeCodedVisemes.get(0).status;
 				else {
-					 println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
+					 //println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
 					ret = AudioStatus.X_NO_SOUND;
 				}
 			} else if (percent > map.getStartPercentage())
 				ret = key;
 		} else {
-		  println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
+		  //println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
 		}
 		if (ret == null)
 			ret = current;
@@ -453,11 +463,12 @@ def tabHolder = DeviceManager.getSpecificDevice("TabHolder", {
 
 HashMap<AudioStatus,Image> images = new HashMap<>()
 String url = "https://github.com/madhephaestus/TextToSpeechASDRTest.git"
-String local_img_path = "/Users/michaelfinnerty/Documents/projects/active_projects/crystal_ball/bowler_bits/TextToSpeechASDRTest/img5/magenta-"
+String local_img_path = "/Users/michaelfinnerty/Documents/projects/active_projects/crystal_ball/bowler_bits/TextToSpeechASDRTest/img_thirteen_v/v-"
 
 for(AudioStatus s:EnumSet.allOf(AudioStatus.class)) {
 	//File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/img/lisa-"+s.parsed+".png")
     //mtc -- revert the file set on this to the line above before submitting pull request 
+    //println s.parsed
 	File f = new File(local_img_path + s.parsed + ".png")
     println "Loading "+f.getAbsolutePath()
 	try{
@@ -474,31 +485,158 @@ laststatus=null
 
 /*
  *  changes to the rhubarb mappings
- */
+*/
+
+//two phonemes don't exist in my current mapping, so their original mappings will remain the same regardless
+AudioStatus.ArpabetToBlair.put("jh", AudioStatus.B_KST_SOUNDS);
+AudioStatus.ArpabetToBlair.put("oy", AudioStatus.F_UW_OW_W_SOUNDS);
+
+//the silence viseme will not change
+AudioStatus.ArpabetToBlair.put("-", AudioStatus.X_NO_SOUND)
+
+
+
 
 // from https://github.com/CommonWealthRobotics/bowler-script-kernel/blob/development/src/main/java/com/neuronrobotics/bowlerstudio/AudioStatus.java#L92
 
-//rhubarb docs
-AudioStatus.ArpabetToBlair.put("ao", AudioStatus.E_AO_ER_SOUNDS)
-AudioStatus.ArpabetToBlair.put("er", AudioStatus.E_AO_ER_SOUNDS)
+/*
+//manual remapping to the rhubarb mappings (with the standard fn_edit changes applied),
+//in order to reset after 13-viseme test runs
+//
+//needs to be run with a img_rhubarb_* folder to render properly
+
+
+AudioStatus.ArpabetToBlair.put("b", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("m", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("p", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ch", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("zh", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("sh", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("hh", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ah", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("uw", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("uh", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("w", AudioStatus.F_UW_OW_W_SOUNDS)
 AudioStatus.ArpabetToBlair.put("ae", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("aa", AudioStatus.C_EH_AE_SOUNDS)
 AudioStatus.ArpabetToBlair.put("eh", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("q", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ih", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("d", AudioStatus.H_L_SOUNDS)
+AudioStatus.ArpabetToBlair.put("g", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("k", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("n", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ng", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("s", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("t", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("y", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("z", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ao", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("th", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("dh", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("f", AudioStatus.G_F_V_SOUNDS)
+AudioStatus.ArpabetToBlair.put("v", AudioStatus.G_F_V_SOUNDS)
+AudioStatus.ArpabetToBlair.put("iy", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("l", AudioStatus.H_L_SOUNDS)
+AudioStatus.ArpabetToBlair.put("r", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("aw", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ay", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("er", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ey", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ow", AudioStatus.F_UW_OW_W_SOUNDS)
+//*/
+
+/*  
+//  experiments with basic 13 viseme mapping
+//  needs to be run with a img_thirteen_* folder to render properly
+*/
+
+/*
+//manual mapping of the thirteen visemes, without any fn_edits
+*/
+
+AudioStatus.ArpabetToBlair.put("b", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("m", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("p", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ch", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("zh", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("sh", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("hh", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ah", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("uw", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("uh", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("w", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ae", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("aa", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("eh", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ih", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("d", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("g", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("k", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("n", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ng", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("s", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("t", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("y", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("z", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ao", AudioStatus.G_F_V_SOUNDS)
+AudioStatus.ArpabetToBlair.put("th", AudioStatus.H_L_SOUNDS)
+AudioStatus.ArpabetToBlair.put("dh", AudioStatus.H_L_SOUNDS)
+AudioStatus.ArpabetToBlair.put("f", AudioStatus.I_user_defined)
+AudioStatus.ArpabetToBlair.put("v", AudioStatus.I_user_defined)
+AudioStatus.ArpabetToBlair.put("iy", AudioStatus.J_user_defined)
+AudioStatus.ArpabetToBlair.put("l", AudioStatus.K_user_defined)
+AudioStatus.ArpabetToBlair.put("r", AudioStatus.L_user_defined)
+AudioStatus.ArpabetToBlair.put("aw", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ay", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("er", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ey", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ow", AudioStatus.C_EH_AE_SOUNDS)
+//*/
+
+/*
+//the manual mapping of thirteen visemes, with the fn_edits
 
 
-//fn opinion
-AudioStatus.ArpabetToBlair.put("hh", AudioStatus.D_AA_SOUNDS);
-AudioStatus.ArpabetToBlair.put("uh", AudioStatus.F_UW_OW_W_SOUNDS);
-AudioStatus.ArpabetToBlair.put("aa", AudioStatus.C_EH_AE_SOUNDS);
-AudioStatus.ArpabetToBlair.put("ih", AudioStatus.C_EH_AE_SOUNDS);
+AudioStatus.ArpabetToBlair.put("b", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("m", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("p", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ch", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("zh", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("sh", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("hh", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ah", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("uw", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("uh", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("w", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ae", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("aa", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("eh", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ih", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("d", AudioStatus.H_L_SOUNDS)
+AudioStatus.ArpabetToBlair.put("g", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("k", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("n", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ng", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("s", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("t", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("y", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("z", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ao", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("th", AudioStatus.H_L_SOUNDS)
+AudioStatus.ArpabetToBlair.put("dh", AudioStatus.H_L_SOUNDS)
+AudioStatus.ArpabetToBlair.put("f", AudioStatus.I_user_defined)
+AudioStatus.ArpabetToBlair.put("v", AudioStatus.I_user_defined)
+AudioStatus.ArpabetToBlair.put("iy", AudioStatus.J_user_defined)
+AudioStatus.ArpabetToBlair.put("l", AudioStatus.K_user_defined)
+AudioStatus.ArpabetToBlair.put("r", AudioStatus.L_user_defined)
+AudioStatus.ArpabetToBlair.put("aw", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ay", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("er", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ey", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ow", AudioStatus.C_EH_AE_SOUNDS)
+//*/
 
-AudioStatus.ArpabetToBlair.put("k", AudioStatus.C_EH_AE_SOUNDS);
-AudioStatus.ArpabetToBlair.put("n", AudioStatus.C_EH_AE_SOUNDS);
-AudioStatus.ArpabetToBlair.put("r", AudioStatus.E_AO_ER_SOUNDS);
 
-AudioStatus.ArpabetToBlair.put("d", AudioStatus.H_L_SOUNDS);
-AudioStatus.ArpabetToBlair.put("y", AudioStatus.C_EH_AE_SOUNDS);
-AudioStatus.ArpabetToBlair.put("z", AudioStatus.C_EH_AE_SOUNDS);
 
 ISpeakingProgress progress ={double percent,AudioStatus status->
 	if(status!=laststatus) {
@@ -515,13 +653,14 @@ MaryInterface marytts = new LocalMaryInterface();
 
 //String text = "Behold the mighty Zoltar!"
 //String text = "The mighty Zoltar sees your future.  You have much to look forward to!"
-//String text = "abracadabra",
+//String text = "abracadabra"
 //String text = "Look alive, wageslaves!"
-String text = "Once upon a midnight dreary, while I pondered, weak and weary.  Over many a quaint and curious volume of forgotten lore"
+//String text = "Once upon a midnight dreary, while I pondered, weak and weary.  Over many a quaint and curious volume of forgotten lore"
 //String text = "While I nodded, nearly napping, suddenly there came a tapping, As of some one gently rapping, rapping at my chamber door.  Tis some visitor, I muttered, tapping at my chamber door.  Only this and nothing more."
 //String text = "Ah distinctly I remember, it was in the bleak December.  And each separate dying ember wrought its ghost upon the floor."
-//String text = "Remember remember the bleak December."
+//String text = "Remember remember the embers of bleak December, dismembered by November's dissenters."
 //String text = "I wanna liv like common people.  I wanna do what ever common people do.  Wanna sleep with common people.  I wanna sleep with, common people.  Like you."
+String text = "To be or not to be.  That is the question.  Whether tis noble-r in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles and by opposing end them."
 //String text = ""
 
 AudioInputStream audio = marytts.generateAudio(text)
