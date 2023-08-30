@@ -176,11 +176,13 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
                     float hLength = siLength / 3.0;
                     float mouthClosedTime = myStart - hLength;
                     
-					TimeCodedViseme tcSilentH = new TimeCodedViseme(AudioStatus.H_L_SOUNDS, tcLast.end, mouthClosedTime, secLen);
+					//TimeCodedViseme tcSilentH = new TimeCodedViseme(AudioStatus.H_L_SOUNDS, tcLast.end, mouthClosedTime, secLen);
+					TimeCodedViseme tcSilentK = new TimeCodedViseme(AudioStatus.K_user_define, tcLast.end, mouthClosedTime, secLen);
 					TimeCodedViseme tcSilentX = new TimeCodedViseme(AudioStatus.X_NO_SOUND, mouthClosedTime, myStart, secLen);
+					//TimeCodedViseme tcSilentX = new TimeCodedViseme(AudioStatus.X_NO_SOUND, tcLast.end, myStart, secLen);
                     
                     //println "ln 297";
-					add(tcSilentH);
+					add(tcSilentK);
 					add(tcSilentX);
                 } else if (myStart - tcLast.end > 0) {
 					// short transition to partially open mouth
@@ -463,7 +465,7 @@ def tabHolder = DeviceManager.getSpecificDevice("TabHolder", {
 
 HashMap<AudioStatus,Image> images = new HashMap<>()
 String url = "https://github.com/madhephaestus/TextToSpeechASDRTest.git"
-String local_img_path = "/Users/michaelfinnerty/Documents/projects/active_projects/crystal_ball/bowler_bits/TextToSpeechASDRTest/img_thirteen_v/v-"
+String local_img_path = "/Users/michaelfinnerty/Documents/projects/active_projects/crystal_ball/bowler_bits/TextToSpeechASDRTest/img_thirteen_magenta/magenta-"
 
 for(AudioStatus s:EnumSet.allOf(AudioStatus.class)) {
 	//File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/img/lisa-"+s.parsed+".png")
