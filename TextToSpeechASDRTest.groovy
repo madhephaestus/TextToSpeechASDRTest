@@ -401,7 +401,16 @@ ISpeakingProgress progress ={double percent,AudioStatus status->
 MaryInterface marytts = new LocalMaryInterface();
 
 String text = "Behold the mighty Zoltar!"
-AudioInputStream audio = marytts.generateAudio(text)
+AudioInputStream audio=null;//= marytts.generateAudio(text)
+File file = new File("put file path here");
+        if (file.exists()) {
+
+            //for external storage Path
+            audio = AudioSystem.getAudioInputStream(file);
+        }
+        else {
+            throw new RuntimeException("Sound: file not found: " + fileName);
+        }
 
 AudioPlayer tts = new AudioPlayer(text);
 tts.setAudio(audio);
