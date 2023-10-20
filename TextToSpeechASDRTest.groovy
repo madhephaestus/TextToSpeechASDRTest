@@ -137,6 +137,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 	private void addWord(VoskResultWord word, long len) {
 
 		double secLen = ((double) len) / 1000.0;
+        println word.word;
 		String w = word.word;
 		if (w == null)
 			return;
@@ -154,7 +155,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		double phonemeLength = wordLen / phonemes.size();
         
         Random rand = new Random();
-        double timeLeadLag = -(1/24.0/2048) //-0.0416667 // rand.nextDouble() / 10.0 //0.04
+        double timeLeadLag = 0 //-(1/24.0/2048) //-0.0416667 // rand.nextDouble() / 10.0 //0.04
 
 		//@finn this is where to adjust the lead/lag of the lip sync with the audio playback
         //mtc -- this is where we can fuck with sequencing and add transition frames.  the transition's probably going to require some sort of javaFX bullshit but we'll see.
@@ -465,7 +466,7 @@ def tabHolder = DeviceManager.getSpecificDevice("TabHolder", {
 
 HashMap<AudioStatus,Image> images = new HashMap<>()
 String url = "https://github.com/madhephaestus/TextToSpeechASDRTest.git"
-String local_img_path = "/Users/michaelfinnerty/Documents/projects/active_projects/crystal_ball/bowler_bits/TextToSpeechASDRTest/img_thirteen_magenta/magenta-"
+String local_img_path = "/Users/michaelfinnerty/Documents/projects/active_projects/crystal_ball/bowler_bits/TextToSpeechASDRTest/img_thirteen_magenta_remarked/magenta-"
 
 for(AudioStatus s:EnumSet.allOf(AudioStatus.class)) {
 	//File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/img/lisa-"+s.parsed+".png")
@@ -554,7 +555,7 @@ AudioStatus.ArpabetToBlair.put("ow", AudioStatus.F_UW_OW_W_SOUNDS)
 
 /*
 //manual mapping of the thirteen visemes, without any fn_edits
-*/
+
 
 AudioStatus.ArpabetToBlair.put("b", AudioStatus.A_PBM_SOUNDS)
 AudioStatus.ArpabetToBlair.put("m", AudioStatus.A_PBM_SOUNDS)
@@ -597,7 +598,7 @@ AudioStatus.ArpabetToBlair.put("ow", AudioStatus.C_EH_AE_SOUNDS)
 
 /*
 //the manual mapping of thirteen visemes, with the fn_edits
-
+*/
 
 AudioStatus.ArpabetToBlair.put("b", AudioStatus.A_PBM_SOUNDS)
 AudioStatus.ArpabetToBlair.put("m", AudioStatus.A_PBM_SOUNDS)
@@ -658,11 +659,11 @@ MaryInterface marytts = new LocalMaryInterface();
 //String text = "abracadabra"
 //String text = "Look alive, wageslaves!"
 //String text = "Once upon a midnight dreary, while I pondered, weak and weary.  Over many a quaint and curious volume of forgotten lore"
-//String text = "While I nodded, nearly napping, suddenly there came a tapping, As of some one gently rapping, rapping at my chamber door.  Tis some visitor, I muttered, tapping at my chamber door.  Only this and nothing more."
+String text = "While I nodded, nearly napping, suddenly there came a tapping, As of some one gently rapping, rapping at my chamber door.  Tis some visitor, I muttered, tapping at my chamber door.  Only this and nothing more."
 //String text = "Ah distinctly I remember, it was in the bleak December.  And each separate dying ember wrought its ghost upon the floor."
 //String text = "Remember remember the embers of bleak December, dismembered by November's dissenters."
 //String text = "I wanna liv like common people.  I wanna do what ever common people do.  Wanna sleep with common people.  I wanna sleep with, common people.  Like you."
-String text = "To be or not to be.  That is the question.  Whether tis noble-r in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles and by opposing end them."
+//String text = "To be or not to be.  That is the question.  Whether tis noble-r in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles and by opposing end them."
 //String text = ""
 
 AudioInputStream audio = marytts.generateAudio(text)
