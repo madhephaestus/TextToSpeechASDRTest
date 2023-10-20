@@ -493,23 +493,32 @@ ISpeakingProgress progress ={double percent,AudioStatus status->
 
 }
 
-MaryInterface marytts = new LocalMaryInterface();
+//MaryInterface marytts = new LocalMaryInterface();
 
 //String text = "Behold the mighty Zoltar!"
 //String text = "The mighty Zoltar sees your future.  You have much to look forward to!"
 //String text = "abracadabra"
 //String text = "Look alive, wageslaves!"
 //String text = "Once upon a midnight dreary, while I pondered, weak and weary.  Over many a quaint and curious volume of forgotten lore"
-String text = "While I nodded, nearly napping, suddenly there came a tapping, As of some one gently rapping, rapping at my chamber door.  Tis some visitor, I muttered, tapping at my chamber door.  Only this and nothing more."
+//String text = "While I nodded, nearly napping, suddenly there came a tapping, As of some one gently rapping, rapping at my chamber door.  Tis some visitor, I muttered, tapping at my chamber door.  Only this and nothing more."
 //String text = "Ah distinctly I remember, it was in the bleak December.  And each separate dying ember wrought its ghost upon the floor."
 //String text = "Remember remember the embers of bleak December, dismembered by November's dissenters."
 //String text = "I wanna liv like common people.  I wanna do what ever common people do.  Wanna sleep with common people.  I wanna sleep with, common people.  Like you."
 //String text = "To be or not to be.  That is the question.  Whether tis noble-r in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles and by opposing end them."
 //String text = ""
 
-AudioInputStream audio = marytts.generateAudio(text)
+AudioInputStream audio=null;//= marytts.generateAudio(text)
+File file = ScriptingEngine.fileFromGit("https://github.com/madhephaestus/TextToSpeechASDRTest.git","wageslaves_wav.wav");
+if (file.exists()) {
 
-AudioPlayer tts = new AudioPlayer(text);
+//for external storage Path
+audio = AudioSystem.getAudioInputStream(file);
+}
+else {
+throw new RuntimeException("Sound: file not found: " + fileName);
+}
+
+AudioPlayer tts = new AudioPlayer(file);
 tts.setAudio(audio);
 tts.setGain((float)1.0);
 tts.setDaemon(true);
