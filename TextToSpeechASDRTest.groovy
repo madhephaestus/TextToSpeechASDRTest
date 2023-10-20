@@ -221,7 +221,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
     private void printTCV() {
         for (int i = 0; i < timeCodedVisemes.size(); i++ ) {
             TimeCodedViseme tcv = timeCodedVisemes.get(i);
-            //println i + ', "' + tcv.status + '", ' + tcv.start + ', ' + tcv.end + ', ' + tcv.total;
+            println i + ', "' + tcv.status + '", ' + tcv.start + ', ' + tcv.end + ', ' + tcv.total;
         }
     }
     
@@ -297,7 +297,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		if (t.isAlive()) {
 			t.interrupt();
 		}
-        printTCV();
+        //printTCV();
 		println "Visemes added, start audio.. "
 	}
 
