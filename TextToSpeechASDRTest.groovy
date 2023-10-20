@@ -137,6 +137,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 	private void addWord(VoskResultWord word, long len) {
 
 		double secLen = ((double) len) / 1000.0;
+        //println word.word;
 		String w = word.word;
 		if (w == null)
 			return;
@@ -144,6 +145,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		double wordStart = word.start;
 		double wordEnd = word.end;
 		double wordLen = wordEnd - wordStart;
+        //println w + ", " + wordStart + ", " + phonemes;
 		ArrayList<String> phonemes = dict.find(w);
 		if (phonemes == null) {
 			// println "\n\n unknown word "+w+"\n\n"
@@ -151,24 +153,47 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		}
 
 		double phonemeLength = wordLen / phonemes.size();
+        
+        Random rand = new Random();
+        double timeLeadLag = 0 //-(1/24.0/2048)
+
 		//@finn this is where to adjust the lead/lag of the lip sync with the audio playback
-		double timeLeadLag = 0.05
+        //mtc -- this is where we can fuck with sequencing and add transition frames.  the transition's probably going to require some sort of javaFX bullshit but we'll see.
 		for (int i = 0; i < phonemes.size(); i++) {
 			String phoneme = phonemes.get(i);
-			AudioStatus stat = toStatus(phoneme);
-			double myStart = wordStart + phonemeLength * ((double) i)+timeLeadLag;
+			AudioStatus stat = toStatus(phoneme);            
+			double myStart = Math.max(wordStart + phonemeLength * ((double) i)+timeLeadLag ,  0);
 			double myEnd = wordStart + phonemeLength * ((double) (i + 1))+timeLeadLag;
+            double segLen = myEnd - myStart;
 			TimeCodedViseme tc = new TimeCodedViseme(stat, myStart, myEnd, secLen);
+            
+            //adds a transitional silent viseme when a silence longer than 1/100 of a second is detected
 			if (timeCodedVisemes.size() > 0) {
 				TimeCodedViseme tcLast = timeCodedVisemes.get(timeCodedVisemes.size() - 1);
-				if (tcLast.end < myStart) {
-					// termination sound of nothing
-					TimeCodedViseme tcSilent = new TimeCodedViseme(AudioStatus.X_NO_SOUND, tcLast.end, myStart, secLen);
-					add(tcSilent);
-				}
+				if (myStart - tcLast.end > 0.03) {
+                    
+                    // for longer pauses, transition through partially open mouth to close
+                    float siLength = myStart - tcLast.end;
+                    float hLength = siLength / 3.0;
+                    float mouthClosedTime = myStart - hLength;
+                    
+					TimeCodedViseme tcSilentK = new TimeCodedViseme(AudioStatus.K_user_define, tcLast.end, mouthClosedTime, secLen);
+					TimeCodedViseme tcSilentX = new TimeCodedViseme(AudioStatus.X_NO_SOUND, mouthClosedTime, myStart, secLen);
+                    
+                    //println "ln 297";
+					add(tcSilentK);
+					add(tcSilentX);
+                } else if (myStart - tcLast.end > 0) {
+					// short transition to partially open mouth
+					TimeCodedViseme tcSilent = new TimeCodedViseme(AudioStatus.H_L_SOUNDS, tcLast.end, myStart, secLen);
+					add(tcSilent);                    
+                }
 			}
-			add(tc);
+            
+            //handles situations at the end of words
+            add(tc);                 
 		}
+        
 
 		// println "Word "+w+" starts at "+wordStart+" ends at "+wordEnd+" each phoneme
 		// length "+phonemeLength+" "+phonemes+" "+timeCodedVisemes
@@ -192,7 +217,14 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		}
 
 	}
-
+    
+    private void printTCV() {
+        for (int i = 0; i < timeCodedVisemes.size(); i++ ) {
+            TimeCodedViseme tcv = timeCodedVisemes.get(i);
+            println i + ', "' + tcv.status + '", ' + tcv.start + ', ' + tcv.end + ', ' + tcv.total;
+        }
+    }
+    
 	public void processRaw(File f, String ttsLocation) throws UnsupportedAudioFileException, IOException {
 
 		words = 0;
@@ -229,6 +261,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 						processWords(database.partial_result, durationInMillis);
 					}
 				}
+                //println result;
 				VoskResultl database = gson.fromJson(recognizer.getFinalResult(), resultType);
 				recognizer.close();
 				processWords(database.result, durationInMillis);
@@ -264,7 +297,8 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		if (t.isAlive()) {
 			t.interrupt();
 		}
-		// println "Visemes added, start audio.. "
+        //printTCV();
+		println "Visemes added, start audio.. "
 	}
 
 	public AudioInputStream startProcessing(AudioInputStream ais, String TTSString) {
@@ -310,13 +344,13 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 				if (timeCodedVisemes.size() > 0)
 					ret = timeCodedVisemes.get(0).status;
 				else {
-					 println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
+					 //println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
 					ret = AudioStatus.X_NO_SOUND;
 				}
 			} else if (percent > map.getStartPercentage())
 				ret = key;
 		} else {
-		  println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
+		  //println "\n\nERROR Audio got ahead of lip sync "+percent+"\n\n"
 		}
 		if (ret == null)
 			ret = current;
@@ -369,9 +403,12 @@ def tabHolder = DeviceManager.getSpecificDevice("TabHolder", {
 
 HashMap<AudioStatus,Image> images = new HashMap<>()
 String url = "https://github.com/madhephaestus/TextToSpeechASDRTest.git"
+
 for(AudioStatus s:EnumSet.allOf(AudioStatus.class)) {
-	File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/img/lisa-"+s.parsed+".png")
-	println "Loading "+f.getAbsolutePath()
+    //println s.parsed
+    //println ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()
+    File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/magenta/magenta-"+s.parsed+".png")
+    //println "Loading "+f.getAbsolutePath()
 	try{
 	Image image = new Image(new FileInputStream(f.getAbsolutePath()));
 	images.put(s, image)
@@ -384,8 +421,66 @@ AudioPlayer.setLambda (new VoskLipSyncLocal());
 ImageView imageView = tabHolder.imageView
 laststatus=null
 
-// from https://github.com/CommonWealthRobotics/bowler-script-kernel/blob/development/src/main/java/com/neuronrobotics/bowlerstudio/AudioStatus.java#L92
+/*
+ *  changes to the rhubarb mappings
+*/
+
+//two phonemes don't exist in my current mapping, so their original mappings will remain the same regardless
+AudioStatus.ArpabetToBlair.put("jh", AudioStatus.B_KST_SOUNDS);
+AudioStatus.ArpabetToBlair.put("oy", AudioStatus.F_UW_OW_W_SOUNDS);
+
+//the silence viseme will not change
 AudioStatus.ArpabetToBlair.put("-", AudioStatus.X_NO_SOUND)
+
+
+
+
+// from https://github.com/CommonWealthRobotics/bowler-script-kernel/blob/development/src/main/java/com/neuronrobotics/bowlerstudio/AudioStatus.java#L92
+
+/*
+//the manual mapping of thirteen visemes, with the fn_edits
+*/
+
+AudioStatus.ArpabetToBlair.put("b", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("m", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("p", AudioStatus.A_PBM_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ch", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("zh", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("sh", AudioStatus.B_KST_SOUNDS)
+AudioStatus.ArpabetToBlair.put("hh", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ah", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("uw", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("uh", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("w", AudioStatus.D_AA_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ae", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("aa", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("eh", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ih", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("d", AudioStatus.H_L_SOUNDS)
+AudioStatus.ArpabetToBlair.put("g", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("k", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("n", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ng", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("s", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("t", AudioStatus.F_UW_OW_W_SOUNDS)
+AudioStatus.ArpabetToBlair.put("y", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("z", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ao", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("th", AudioStatus.H_L_SOUNDS)
+AudioStatus.ArpabetToBlair.put("dh", AudioStatus.H_L_SOUNDS)
+AudioStatus.ArpabetToBlair.put("f", AudioStatus.I_user_defined)
+AudioStatus.ArpabetToBlair.put("v", AudioStatus.I_user_defined)
+AudioStatus.ArpabetToBlair.put("iy", AudioStatus.J_user_defined)
+AudioStatus.ArpabetToBlair.put("l", AudioStatus.K_user_defined)
+AudioStatus.ArpabetToBlair.put("r", AudioStatus.L_user_defined)
+AudioStatus.ArpabetToBlair.put("aw", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ay", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("er", AudioStatus.E_AO_ER_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ey", AudioStatus.C_EH_AE_SOUNDS)
+AudioStatus.ArpabetToBlair.put("ow", AudioStatus.C_EH_AE_SOUNDS)
+//*/
+
+
 
 ISpeakingProgress progress ={double percent,AudioStatus status->
 	if(status!=laststatus) {
@@ -398,12 +493,32 @@ ISpeakingProgress progress ={double percent,AudioStatus status->
 
 }
 
-MaryInterface marytts = new LocalMaryInterface();
+//MaryInterface marytts = new LocalMaryInterface();
 
-String text = "Behold the mighty Zoltar!"
-AudioInputStream audio = marytts.generateAudio(text)
+//String text = "Behold the mighty Zoltar!"
+//String text = "The mighty Zoltar sees your future.  You have much to look forward to!"
+//String text = "abracadabra"
+//String text = "Look alive, wageslaves!"
+//String text = "Once upon a midnight dreary, while I pondered, weak and weary.  Over many a quaint and curious volume of forgotten lore"
+//String text = "While I nodded, nearly napping, suddenly there came a tapping, As of some one gently rapping, rapping at my chamber door.  Tis some visitor, I muttered, tapping at my chamber door.  Only this and nothing more."
+//String text = "Ah distinctly I remember, it was in the bleak December.  And each separate dying ember wrought its ghost upon the floor."
+//String text = "Remember remember the embers of bleak December, dismembered by November's dissenters."
+//String text = "I wanna liv like common people.  I wanna do what ever common people do.  Wanna sleep with common people.  I wanna sleep with, common people.  Like you."
+//String text = "To be or not to be.  That is the question.  Whether tis noble-r in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles and by opposing end them."
+//String text = ""
 
-AudioPlayer tts = new AudioPlayer(text);
+AudioInputStream audio=null;//= marytts.generateAudio(text)
+File file = ScriptingEngine.fileFromGit("https://github.com/madhephaestus/TextToSpeechASDRTest.git","wageslaves_wav.wav");
+if (file.exists()) {
+
+//for external storage Path
+audio = AudioSystem.getAudioInputStream(file);
+}
+else {
+throw new RuntimeException("Sound: file not found: " + fileName);
+}
+
+AudioPlayer tts = new AudioPlayer(file);
 tts.setAudio(audio);
 tts.setGain((float)1.0);
 tts.setDaemon(true);
