@@ -1,12 +1,15 @@
-A/1     30+25   Man
-B/2     22+30   flaSH
-C/3     17+08   bUt
-D/4     34+16   Wrong
-E/5     22+28   flAsh
-F/6     44+22   Deadly
-G/7     23+08   gOrdon
-H/8     24+06   THere
-I/9     22+24   Flash
-J/10    20+08   wE
-K/11    22+26   fLash
-L/12    28+18   Rains
+A/1     30+25   Man             ***
+B/2     22+30   flaSH           22+29   flaSH
+C/3     17+08   bUt             ***
+D/4     34+16   Wrong           15+15   stOOd
+E/5     22+28   flAsh           42+10   jAm
+F/6     44+22   Deadly          51+16   meSSage
+G/7     23+08   gOrdon          39+00   gOt
+H/8     24+06   THere           ***
+I/9     22+24   Flash           ***
+J/10    20+08   wE              20+02   wE
+K/11    22+26   fLash           45+11   deadLy
+L/12    28+18   Rains           36+23   WRay
+X/13    30+25   Man             ***
+
+B/2, H/8, J/10, K/11    still look pretty similar on preview

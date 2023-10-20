@@ -137,7 +137,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 	private void addWord(VoskResultWord word, long len) {
 
 		double secLen = ((double) len) / 1000.0;
-        println word.word;
+        //println word.word;
 		String w = word.word;
 		if (w == null)
 			return;
@@ -155,7 +155,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
 		double phonemeLength = wordLen / phonemes.size();
         
         Random rand = new Random();
-        double timeLeadLag = 0 //-(1/24.0/2048) //-0.0416667 // rand.nextDouble() / 10.0 //0.04
+        double timeLeadLag = 0 //-(1/24.0/2048)
 
 		//@finn this is where to adjust the lead/lag of the lip sync with the audio playback
         //mtc -- this is where we can fuck with sequencing and add transition frames.  the transition's probably going to require some sort of javaFX bullshit but we'll see.
@@ -177,10 +177,8 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
                     float hLength = siLength / 3.0;
                     float mouthClosedTime = myStart - hLength;
                     
-					//TimeCodedViseme tcSilentH = new TimeCodedViseme(AudioStatus.H_L_SOUNDS, tcLast.end, mouthClosedTime, secLen);
 					TimeCodedViseme tcSilentK = new TimeCodedViseme(AudioStatus.K_user_define, tcLast.end, mouthClosedTime, secLen);
 					TimeCodedViseme tcSilentX = new TimeCodedViseme(AudioStatus.X_NO_SOUND, mouthClosedTime, myStart, secLen);
-					//TimeCodedViseme tcSilentX = new TimeCodedViseme(AudioStatus.X_NO_SOUND, tcLast.end, myStart, secLen);
                     
                     //println "ln 297";
 					add(tcSilentK);
@@ -192,69 +190,8 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
                 }
 			}
             
-            //looks for transition situations within a word (i.e. it bails at the last syllable)
-            /*if (i < phonemes.size() - 1) {
-                String next_phoneme = phonemes.get(i+1);
-                AudioStatus stat_next = toStatus(next_phoneme);
-                //identifies transition sitautions
-                //ⒶⒸⒹ and ⒷⒸⒹ
-                //ⒸⒺⒻ and ⒹⒺⒻ
-                if (
-                    //A or B preceeding D
-                    (stat_next == AudioStatus.D_AA_SOUNDS && 
-                    (stat == AudioStatus.A_PBM_SOUNDS || stat == AudioStatus.B_KST_SOUNDS)) ||
-                    //D preceeding A or B
-                    ((stat_next == AudioStatus.A_PBM_SOUNDS || stat_next == AudioStatus.B_KST_SOUNDS) &&
-                    stat == AudioStatus.D_AA_SOUNDS) ||
-                    //C or D preceeding an F
-                    (stat_next == AudioStatus.F_UW_OW_W_SOUNDS && 
-                    (stat == AudioStatus.C_EH_AE_SOUNDS || stat == AudioStatus.D_AA_SOUNDS)) ||
-                    //F preceeding a C or D
-                    ((stat_next == AudioStatus.C_EH_AE_SOUNDS || stat_next == AudioStatus.D_AA_SOUNDS) &&
-                    stat == AudioStatus.F_UW_OW_W_SOUNDS)
-                   ) {
-                    //println "transition situation detected";
-                    
-                    //determine the current length of the viseme, and the length and start point of the transition to be applied
-                    float visLength = tc.end - tc.start;
-                    float transLength = visLength / 3.0;
-                    float transStart = tc.end - transLength;
-                    
-                    AudioStatus transViseme = tc.status;
-                    
-                    
-                    //based on the situation, set the appropriate transition viseme
-                    if (stat_next == AudioStatus.F_UW_OW_W_SOUNDS || stat == AudioStatus.F_UW_OW_W_SOUNDS){
-                        //C or D found preceeding an F, or
-                        //F found preceeding a C or D
-                        //println "E_AO_ER inserted"
-                        transViseme = AudioStatus.E_AO_ER_SOUNDS
-                    } else if (stat_next == AudioStatus.D_AA_SOUNDS || stat == AudioStatus.D_AA_SOUNDS) {
-                        //A or B found preceeding a D, or
-                        //D found preceeding an A or B
-                        //println "C_EH_AE inserted"
-                        transViseme = AudioStatus.C_EH_AE_SOUNDS
-                    } else {
-                        //println "ERR_TRANSITION"
-                    }
-                    
-                    //create the transition viseme
-                    TimeCodedViseme tc_transition = new TimeCodedViseme(transViseme, transStart, tc.end, secLen);
-                    
-                    //push back the end point of the main viseme to the start point of the transition viseme
-                    tc.end = transStart;
-                    
-                    //add the modified original viseme, and then the transition viseme
-                    add(tc);
-                    add(tc_transition);
-                } else {
-                    //handles situations within words where the following viseme does not require a transition
-                    add(tc);
-                }
-            } else {*/
-                //handles situations at the end of words
-                add(tc);                 
-            //}
+            //handles situations at the end of words
+            add(tc);                 
 		}
         
 
@@ -284,7 +221,7 @@ public class VoskLipSyncLocal implements IAudioProcessingLambda {
     private void printTCV() {
         for (int i = 0; i < timeCodedVisemes.size(); i++ ) {
             TimeCodedViseme tcv = timeCodedVisemes.get(i);
-            println i + ', "' + tcv.status + '", ' + tcv.start + ', ' + tcv.end + ', ' + tcv.total;
+            //println i + ', "' + tcv.status + '", ' + tcv.start + ', ' + tcv.end + ', ' + tcv.total;
         }
     }
     
@@ -466,14 +403,12 @@ def tabHolder = DeviceManager.getSpecificDevice("TabHolder", {
 
 HashMap<AudioStatus,Image> images = new HashMap<>()
 String url = "https://github.com/madhephaestus/TextToSpeechASDRTest.git"
-String local_img_path = "/Users/michaelfinnerty/Documents/projects/active_projects/crystal_ball/bowler_bits/TextToSpeechASDRTest/img_thirteen_magenta_remarked/magenta-"
 
 for(AudioStatus s:EnumSet.allOf(AudioStatus.class)) {
-	//File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/img/lisa-"+s.parsed+".png")
-    //mtc -- revert the file set on this to the line above before submitting pull request 
     //println s.parsed
-	File f = new File(local_img_path + s.parsed + ".png")
-    println "Loading "+f.getAbsolutePath()
+    //println ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()
+    File f = new File(ScriptingEngine.getRepositoryCloneDirectory(url).getAbsolutePath()+ "/magenta/magenta-"+s.parsed+".png")
+    //println "Loading "+f.getAbsolutePath()
 	try{
 	Image image = new Image(new FileInputStream(f.getAbsolutePath()));
 	images.put(s, image)
@@ -501,100 +436,6 @@ AudioStatus.ArpabetToBlair.put("-", AudioStatus.X_NO_SOUND)
 
 
 // from https://github.com/CommonWealthRobotics/bowler-script-kernel/blob/development/src/main/java/com/neuronrobotics/bowlerstudio/AudioStatus.java#L92
-
-/*
-//manual remapping to the rhubarb mappings (with the standard fn_edit changes applied),
-//in order to reset after 13-viseme test runs
-//
-//needs to be run with a img_rhubarb_* folder to render properly
-
-
-AudioStatus.ArpabetToBlair.put("b", AudioStatus.A_PBM_SOUNDS)
-AudioStatus.ArpabetToBlair.put("m", AudioStatus.A_PBM_SOUNDS)
-AudioStatus.ArpabetToBlair.put("p", AudioStatus.A_PBM_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ch", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("zh", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("sh", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("hh", AudioStatus.D_AA_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ah", AudioStatus.D_AA_SOUNDS)
-AudioStatus.ArpabetToBlair.put("uw", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("uh", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("w", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ae", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("aa", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("eh", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ih", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("d", AudioStatus.H_L_SOUNDS)
-AudioStatus.ArpabetToBlair.put("g", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("k", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("n", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ng", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("s", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("t", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("y", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("z", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ao", AudioStatus.E_AO_ER_SOUNDS)
-AudioStatus.ArpabetToBlair.put("th", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("dh", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("f", AudioStatus.G_F_V_SOUNDS)
-AudioStatus.ArpabetToBlair.put("v", AudioStatus.G_F_V_SOUNDS)
-AudioStatus.ArpabetToBlair.put("iy", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("l", AudioStatus.H_L_SOUNDS)
-AudioStatus.ArpabetToBlair.put("r", AudioStatus.E_AO_ER_SOUNDS)
-AudioStatus.ArpabetToBlair.put("aw", AudioStatus.D_AA_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ay", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("er", AudioStatus.E_AO_ER_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ey", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ow", AudioStatus.F_UW_OW_W_SOUNDS)
-//*/
-
-/*  
-//  experiments with basic 13 viseme mapping
-//  needs to be run with a img_thirteen_* folder to render properly
-*/
-
-/*
-//manual mapping of the thirteen visemes, without any fn_edits
-
-
-AudioStatus.ArpabetToBlair.put("b", AudioStatus.A_PBM_SOUNDS)
-AudioStatus.ArpabetToBlair.put("m", AudioStatus.A_PBM_SOUNDS)
-AudioStatus.ArpabetToBlair.put("p", AudioStatus.A_PBM_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ch", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("zh", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("sh", AudioStatus.B_KST_SOUNDS)
-AudioStatus.ArpabetToBlair.put("hh", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ah", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("uw", AudioStatus.D_AA_SOUNDS)
-AudioStatus.ArpabetToBlair.put("uh", AudioStatus.D_AA_SOUNDS)
-AudioStatus.ArpabetToBlair.put("w", AudioStatus.D_AA_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ae", AudioStatus.E_AO_ER_SOUNDS)
-AudioStatus.ArpabetToBlair.put("aa", AudioStatus.E_AO_ER_SOUNDS)
-AudioStatus.ArpabetToBlair.put("eh", AudioStatus.E_AO_ER_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ih", AudioStatus.E_AO_ER_SOUNDS)
-AudioStatus.ArpabetToBlair.put("d", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("g", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("k", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("n", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ng", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("s", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("t", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("y", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("z", AudioStatus.F_UW_OW_W_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ao", AudioStatus.G_F_V_SOUNDS)
-AudioStatus.ArpabetToBlair.put("th", AudioStatus.H_L_SOUNDS)
-AudioStatus.ArpabetToBlair.put("dh", AudioStatus.H_L_SOUNDS)
-AudioStatus.ArpabetToBlair.put("f", AudioStatus.I_user_defined)
-AudioStatus.ArpabetToBlair.put("v", AudioStatus.I_user_defined)
-AudioStatus.ArpabetToBlair.put("iy", AudioStatus.J_user_defined)
-AudioStatus.ArpabetToBlair.put("l", AudioStatus.K_user_defined)
-AudioStatus.ArpabetToBlair.put("r", AudioStatus.L_user_defined)
-AudioStatus.ArpabetToBlair.put("aw", AudioStatus.E_AO_ER_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ay", AudioStatus.E_AO_ER_SOUNDS)
-AudioStatus.ArpabetToBlair.put("er", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ey", AudioStatus.C_EH_AE_SOUNDS)
-AudioStatus.ArpabetToBlair.put("ow", AudioStatus.C_EH_AE_SOUNDS)
-//*/
 
 /*
 //the manual mapping of thirteen visemes, with the fn_edits
